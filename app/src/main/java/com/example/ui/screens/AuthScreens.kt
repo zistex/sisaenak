@@ -1,20 +1,23 @@
 package com.example.ui.screens
 
 import android.util.Patterns
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -22,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -34,10 +38,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.Person
@@ -71,9 +75,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -85,9 +88,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.ui.components.PrimaryOrangeButton
-import com.example.ui.components.SecondaryGreenButton
-import com.example.ui.theme.ActionOrange
 import com.example.ui.theme.ActionOrangeDark
 import com.example.ui.theme.ActionOrangeSoft
 import com.example.ui.theme.BgLightGray
@@ -101,6 +101,7 @@ import com.example.ui.theme.LiveRedSoft
 import com.example.ui.theme.SurfaceBorder
 import com.example.ui.theme.TextBlack
 import com.example.ui.theme.TextGray
+import com.example.ui.theme.TextMuted
 import kotlinx.coroutines.delay
 
 @Composable
@@ -113,7 +114,7 @@ fun SplashScreen(
     var startAnim by remember { mutableStateOf(false) }
 
     val logoScale by animateFloatAsState(
-        targetValue = if (startAnim) 1f else 0.72f,
+        targetValue = if (startAnim) 1f else 0.84f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
@@ -132,7 +133,7 @@ fun SplashScreen(
 
     LaunchedEffect(isAuthReady) {
         if (isAuthReady) {
-            delay(1350L)
+            delay(1300L)
             if (isLoggedIn) {
                 onNavigateToHome()
             } else {
@@ -144,26 +145,8 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(FreshGreenDark, FreshGreen, Color(0xFF16A34A))
-                )
-            )
+            .background(BgWhite)
     ) {
-        // Decorative atmospheric circles
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawCircle(
-                color = Color.White.copy(alpha = 0.08f),
-                radius = size.minDimension * 0.45f,
-                center = Offset(size.width * 0.9f, size.height * 0.14f)
-            )
-            drawCircle(
-                color = Color.White.copy(alpha = 0.07f),
-                radius = size.minDimension * 0.36f,
-                center = Offset(size.width * 0.08f, size.height * 0.84f)
-            )
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -173,18 +156,19 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Center Brand Emblem
+            // Clean Minimalist Center Brand Emblem on Pure White
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.scale(logoScale)
             ) {
                 Surface(
-                    shape = RoundedCornerShape(30.dp),
+                    shape = RoundedCornerShape(28.dp),
                     color = BgWhite,
-                    shadowElevation = 12.dp,
-                    modifier = Modifier.size(118.dp)
+                    border = BorderStroke(1.dp, SurfaceBorder),
+                    shadowElevation = 6.dp,
+                    modifier = Modifier.size(104.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -198,7 +182,7 @@ fun SplashScreen(
                             contentScale = ContentScale.Fit,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(RoundedCornerShape(18.dp))
                         )
                     }
                 }
@@ -208,60 +192,45 @@ fun SplashScreen(
                 Text(
                     text = "LUDES",
                     style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.ExtraBold
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.5).sp
                     ),
-                    color = Color.White
+                    color = TextBlack
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = "Makanan Enak Harga Hemat, Sebelum Ludes",
-                    style = MaterialTheme.typography.bodyLarge.copy(
+                    style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium
                     ),
-                    color = Color.White.copy(alpha = 0.94f),
+                    color = TextGray,
                     textAlign = TextAlign.Center
                 )
             }
 
-            // Bottom Trust Pill & Loader
+            // Minimalist Progress & Subtle Tag
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color.White.copy(alpha = 0.18f),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Storefront,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Ambil Sendiri di Warung • Gratis Ongkir",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White
-                        )
-                    }
-                }
-
                 LinearProgressIndicator(
-                    color = ActionOrange,
-                    trackColor = Color.White.copy(alpha = 0.28f),
+                    color = FreshGreen,
+                    trackColor = SurfaceBorder.copy(alpha = 0.6f),
                     modifier = Modifier
-                        .width(120.dp)
-                        .height(5.dp)
+                        .width(96.dp)
+                        .height(3.dp)
                         .clip(RoundedCornerShape(50))
+                )
+
+                Text(
+                    text = "Ambil Sendiri di Warung • Tanpa Ongkir",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    color = TextMuted
                 )
             }
         }
@@ -350,119 +319,137 @@ fun RegisterAuthScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgLightGray),
+            .background(BgWhite),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
             modifier = Modifier
+                .widthIn(max = 480.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Brand Hero Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(FreshGreenDark, FreshGreen)
-                        )
-                    )
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 20.dp, vertical = 22.dp),
-                contentAlignment = Alignment.Center
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Column(
-                    modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
-                    horizontalAlignment = Alignment.Start
+                // Top Clean Brand Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = BgWhite,
-                            modifier = Modifier.size(42.dp)
+                            border = BorderStroke(1.dp, SurfaceBorder),
+                            modifier = Modifier.size(40.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Filled.Eco,
-                                    contentDescription = "LUDES",
-                                    tint = FreshGreen,
-                                    modifier = Modifier.size(26.dp)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_sisa_enak_fg),
+                                    contentDescription = "Logo LUDES",
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "LUDES",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.ExtraBold
-                                ),
-                                color = Color.White
+                        Text(
+                            text = "LUDES",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = (-0.3).sp
+                            ),
+                            color = TextBlack
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = FreshGreenSoft,
+                        border = BorderStroke(1.dp, FreshGreenBorder)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Storefront,
+                                contentDescription = null,
+                                tint = FreshGreenDark,
+                                modifier = Modifier.size(13.dp)
                             )
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = "Makanan Enak Harga Hemat, Sebelum Ludes",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.9f)
+                                text = "Ambil Sendiri",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = FreshGreenDark
                             )
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
+                // Editorial Headline & Subtitle directly on clean white
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = if (isVerifyingEmail) {
-                            "Verifikasi Email Kamu"
-                        } else if (authTab == 0) {
-                            "Buat Akun LUDES"
-                        } else {
-                            "Masuk ke LUDES"
+                        text = when {
+                            isVerifyingEmail -> "Verifikasi email kamu"
+                            authTab == 0 -> "Buat akun baru"
+                            else -> "Selamat datang kembali"
                         },
                         style = MaterialTheme.typography.headlineMedium.copy(
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.ExtraBold
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.4).sp
                         ),
-                        color = Color.White
+                        color = TextBlack
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = if (isVerifyingEmail) {
-                            "Satu langkah lagi! Masukkan kode verifikasi agar akun kamu aktif."
+                            "Masukkan kode 6 digit yang dikirim ke ${regEmail.trim()}."
                         } else {
-                            "Cukup nama, email, password, dan verifikasi email. Langsung bisa pesan!"
+                            "Makanan Enak Harga Hemat, Sebelum Ludes"
                         },
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.92f)
+                        color = TextGray
                     )
                 }
-            }
 
-            Column(
-                modifier = Modifier
-                    .widthIn(max = 600.dp)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                // Tab Switcher: Daftar | Masuk (hidden during email verification step)
+                // Sleek Segmented Switcher (Daftar | Masuk)
                 if (!isVerifyingEmail) {
                     Surface(
-                        shape = RoundedCornerShape(50),
-                        color = BgWhite,
+                        shape = RoundedCornerShape(14.dp),
+                        color = BgLightGray,
                         border = BorderStroke(1.dp, SurfaceBorder),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(modifier = Modifier.padding(4.dp)) {
+                        Row(
+                            modifier = Modifier.padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             listOf("Daftar Akun", "Masuk").forEachIndexed { idx, label ->
                                 val selected = authTab == idx
                                 Surface(
-                                    shape = RoundedCornerShape(50),
-                                    color = if (selected) ActionOrange else Color.Transparent,
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (selected) BgWhite else Color.Transparent,
+                                    shadowElevation = if (selected) 2.dp else 0.dp,
                                     modifier = Modifier
                                         .weight(1f)
-                                        .heightIn(min = 48.dp)
-                                        .clip(RoundedCornerShape(50))
+                                        .heightIn(min = 44.dp)
+                                        .clip(RoundedCornerShape(10.dp))
                                         .clickable {
                                             authTab = idx
                                             errorMessage = null
@@ -472,8 +459,10 @@ fun RegisterAuthScreen(
                                     Box(contentAlignment = Alignment.Center) {
                                         Text(
                                             text = label,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = if (selected) Color.White else TextGray
+                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                                            ),
+                                            color = if (selected) TextBlack else TextGray
                                         )
                                     }
                                 }
@@ -482,29 +471,31 @@ fun RegisterAuthScreen(
                     }
                 }
 
-                // Inline Validation / Error Banner
+                // Inline Validation / Error Notice
                 AnimatedVisibility(visible = errorMessage != null) {
                     errorMessage?.let { msg ->
                         Surface(
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RoundedCornerShape(12.dp),
                             color = LiveRedSoft,
-                            border = BorderStroke(1.dp, LiveRed.copy(alpha = 0.4f)),
+                            border = BorderStroke(1.dp, LiveRed.copy(alpha = 0.25f)),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
-                                modifier = Modifier.padding(12.dp),
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.Info,
+                                    imageVector = Icons.Filled.ErrorOutline,
                                     contentDescription = null,
                                     tint = LiveRed,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = msg,
-                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = FontWeight.Medium
+                                    ),
                                     color = LiveRed
                                 )
                             }
@@ -512,108 +503,85 @@ fun RegisterAuthScreen(
                     }
                 }
 
-                // Main Auth Card
-                Surface(
-                    shape = RoundedCornerShape(22.dp),
-                    color = BgWhite,
-                    border = BorderStroke(1.dp, SurfaceBorder),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                // Clean Borderless Form Content directly on white
+                AnimatedContent(
+                    targetState = Triple(isVerifyingEmail, authTab, Unit),
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "authFormContent"
+                ) { (verifying, tab, _) ->
                     Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        if (isVerifyingEmail) {
-                            // Step 2: Verifikasi Email
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = FreshGreenSoft,
-                                    modifier = Modifier.size(48.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Filled.MarkEmailRead,
-                                            contentDescription = "Verifikasi Email",
-                                            tint = FreshGreenDark,
-                                            modifier = Modifier.size(26.dp)
-                                        )
+                        if (verifying) {
+                            // Email Verification Step
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = FreshGreenSoft,
+                                border = BorderStroke(1.dp, FreshGreenBorder),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable {
+                                        otpInput = generatedOtp
+                                        errorMessage = null
                                     }
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = "Cek Email Verifikasi",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = TextBlack
-                                    )
-                                    Text(
-                                        text = regEmail.trim(),
-                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                                        color = FreshGreenDark
-                                    )
-                                }
-                            }
-
-                            otpInfoMessage?.let { info ->
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = FreshGreenSoft,
-                                    border = BorderStroke(1.dp, FreshGreenBorder),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            otpInput = generatedOtp
-                                            errorMessage = null
-                                        }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(
-                                        modifier = Modifier.padding(12.dp),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = BgWhite,
+                                        modifier = Modifier.size(40.dp)
                                     ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Filled.MarkEmailRead,
+                                                contentDescription = "Verifikasi Email",
+                                                tint = FreshGreenDark,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         Text(
-                                            text = info,
+                                            text = otpInfoMessage ?: "Kode verifikasi terkirim",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = FreshGreenDark
                                         )
                                         Text(
-                                            text = "Kode Verifikasi Anda: $generatedOtp (Tap untuk isi otomatis)",
-                                            style = MaterialTheme.typography.labelLarge,
+                                            text = "Kode: $generatedOtp • Tap untuk isi otomatis",
+                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                fontWeight = FontWeight.Bold
+                                            ),
                                             color = FreshGreenDark
                                         )
                                     }
                                 }
                             }
 
-                            OutlinedTextField(
+                            AuthLabeledField(
+                                label = "Kode Verifikasi (6 Digit)",
                                 value = otpInput,
                                 onValueChange = { input ->
                                     otpInput = input.filter { it.isDigit() }.take(6)
                                     errorMessage = null
                                 },
-                                label = { Text("Kode Verifikasi 6 Digit") },
-                                placeholder = { Text("Masukkan 6 digit angka") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = FreshGreenDark)
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                shape = RoundedCornerShape(14.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ActionOrange,
-                                    unfocusedBorderColor = SurfaceBorder
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("verify_otp_input")
+                                placeholder = "Masukkan 6 digit angka",
+                                leadingIcon = Icons.Filled.CheckCircle,
+                                keyboardType = KeyboardType.Number,
+                                testTag = "verify_otp_input"
                             )
 
-                            PrimaryOrangeButton(
-                                text = "Verifikasi Email & Masuk",
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            CleanPrimaryAuthButton(
+                                text = "Verifikasi & Masuk",
                                 onClick = { validateAndCompleteVerification() },
-                                testTag = "verify_submit_button",
-                                modifier = Modifier.fillMaxWidth()
+                                testTag = "verify_submit_button"
                             )
 
                             Row(
@@ -623,7 +591,7 @@ fun RegisterAuthScreen(
                                 TextButton(
                                     onClick = {
                                         generatedOtp = (100000..999999).random().toString()
-                                        otpInfoMessage = "Kode verifikasi baru dikirim ke ${regEmail.trim()}"
+                                        otpInfoMessage = "Kode baru dikirim ke ${regEmail.trim()}"
                                         errorMessage = null
                                     }
                                 ) {
@@ -633,8 +601,12 @@ fun RegisterAuthScreen(
                                         modifier = Modifier.size(16.dp),
                                         tint = FreshGreenDark
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Kirim Ulang Kode", color = FreshGreenDark)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Kirim Ulang Kode",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = FreshGreenDark
+                                    )
                                 }
 
                                 TextButton(
@@ -643,168 +615,106 @@ fun RegisterAuthScreen(
                                         errorMessage = null
                                     }
                                 ) {
-                                    Text("Ubah Email", color = TextGray)
+                                    Text(
+                                        text = "Ubah Email",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = TextGray
+                                    )
                                 }
                             }
-                        } else if (authTab == 0) {
-                            // Step 1: Daftar Akun (Nama, Email, Password)
-                            OutlinedTextField(
+                        } else if (tab == 0) {
+                            // Register Form
+                            AuthLabeledField(
+                                label = "Nama Lengkap",
                                 value = regName,
                                 onValueChange = {
                                     regName = it
                                     errorMessage = null
                                 },
-                                label = { Text("Nama Lengkap") },
-                                placeholder = { Text("Contoh: Siti Rahma") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Person, contentDescription = null, tint = FreshGreenDark)
-                                },
-                                singleLine = true,
-                                shape = RoundedCornerShape(14.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ActionOrange,
-                                    unfocusedBorderColor = SurfaceBorder
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("register_name_input")
+                                placeholder = "Contoh: Siti Rahma",
+                                leadingIcon = Icons.Filled.Person,
+                                testTag = "register_name_input"
                             )
 
-                            OutlinedTextField(
+                            AuthLabeledField(
+                                label = "Alamat Email",
                                 value = regEmail,
                                 onValueChange = {
                                     regEmail = it
                                     errorMessage = null
                                 },
-                                label = { Text("Email") },
-                                placeholder = { Text("Contoh: nama@email.com") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Email, contentDescription = null, tint = FreshGreenDark)
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                                singleLine = true,
-                                shape = RoundedCornerShape(14.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ActionOrange,
-                                    unfocusedBorderColor = SurfaceBorder
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("register_email_input")
+                                placeholder = "nama@email.com",
+                                leadingIcon = Icons.Filled.Email,
+                                keyboardType = KeyboardType.Email,
+                                testTag = "register_email_input"
                             )
 
-                            OutlinedTextField(
+                            AuthLabeledField(
+                                label = "Password",
                                 value = regPassword,
                                 onValueChange = {
                                     regPassword = it
                                     errorMessage = null
                                 },
-                                label = { Text("Password") },
-                                placeholder = { Text("Minimal 6 karakter") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Lock, contentDescription = null, tint = FreshGreenDark)
-                                },
-                                trailingIcon = {
-                                    IconButton(onClick = { showRegPassword = !showRegPassword }) {
-                                        Icon(
-                                            imageVector = if (showRegPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                            contentDescription = if (showRegPassword) "Sembunyikan password" else "Lihat password",
-                                            tint = TextGray
-                                        )
-                                    }
-                                },
-                                visualTransformation = if (showRegPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                singleLine = true,
-                                shape = RoundedCornerShape(14.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ActionOrange,
-                                    unfocusedBorderColor = SurfaceBorder
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("register_password_input")
+                                placeholder = "Minimal 6 karakter",
+                                leadingIcon = Icons.Filled.Lock,
+                                keyboardType = KeyboardType.Password,
+                                isPassword = true,
+                                passwordVisible = showRegPassword,
+                                onTogglePassword = { showRegPassword = !showRegPassword },
+                                testTag = "register_password_input"
                             )
 
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
-                            PrimaryOrangeButton(
+                            CleanPrimaryAuthButton(
                                 text = "Daftar & Verifikasi Email",
                                 onClick = { validateAndStartEmailVerification() },
-                                testTag = "register_submit_button",
-                                modifier = Modifier.fillMaxWidth()
+                                testTag = "register_submit_button"
                             )
                         } else {
-                            // Login Tab (Email & Password)
-                            OutlinedTextField(
+                            // Login Form
+                            AuthLabeledField(
+                                label = "Alamat Email",
                                 value = loginEmail,
                                 onValueChange = {
                                     loginEmail = it
                                     errorMessage = null
                                 },
-                                label = { Text("Email") },
-                                placeholder = { Text("Contoh: siti.rahma@gmail.com") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Email, contentDescription = null, tint = FreshGreenDark)
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                                singleLine = true,
-                                shape = RoundedCornerShape(14.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ActionOrange,
-                                    unfocusedBorderColor = SurfaceBorder
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("login_email_input")
+                                placeholder = "siti.rahma@gmail.com",
+                                leadingIcon = Icons.Filled.Email,
+                                keyboardType = KeyboardType.Email,
+                                testTag = "login_email_input"
                             )
 
-                            OutlinedTextField(
+                            AuthLabeledField(
+                                label = "Password",
                                 value = loginPassword,
                                 onValueChange = {
                                     loginPassword = it
                                     errorMessage = null
                                 },
-                                label = { Text("Password") },
-                                placeholder = { Text("Masukkan password") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Lock, contentDescription = null, tint = FreshGreenDark)
-                                },
-                                trailingIcon = {
-                                    IconButton(onClick = { showLoginPassword = !showLoginPassword }) {
-                                        Icon(
-                                            imageVector = if (showLoginPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                            contentDescription = if (showLoginPassword) "Sembunyikan password" else "Lihat password",
-                                            tint = TextGray
-                                        )
-                                    }
-                                },
-                                visualTransformation = if (showLoginPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                singleLine = true,
-                                shape = RoundedCornerShape(14.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ActionOrange,
-                                    unfocusedBorderColor = SurfaceBorder
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("login_password_input")
+                                placeholder = "Masukkan password akun",
+                                leadingIcon = Icons.Filled.Lock,
+                                keyboardType = KeyboardType.Password,
+                                isPassword = true,
+                                passwordVisible = showLoginPassword,
+                                onTogglePassword = { showLoginPassword = !showLoginPassword },
+                                testTag = "login_password_input"
                             )
 
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
-                            PrimaryOrangeButton(
+                            CleanPrimaryAuthButton(
                                 text = "Masuk Sekarang",
                                 onClick = { validateAndLogin() },
-                                testTag = "login_submit_button",
-                                modifier = Modifier.fillMaxWidth()
+                                testTag = "login_submit_button"
                             )
                         }
                     }
                 }
 
-                // Divider + Google Sign-In Notice / Quick Demo Entry
+                // Alternative Auth Methods
                 AnimatedVisibility(
                     visible = !isVerifyingEmail,
                     enter = fadeIn() + slideInVertically()
@@ -816,22 +726,24 @@ fun RegisterAuthScreen(
                         ) {
                             HorizontalDivider(modifier = Modifier.weight(1f), color = SurfaceBorder)
                             Text(
-                                text = "  atau  ",
+                                text = "atau lanjutkan dengan",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextGray
+                                color = TextMuted,
+                                modifier = Modifier.padding(horizontal = 12.dp)
                             )
                             HorizontalDivider(modifier = Modifier.weight(1f), color = SurfaceBorder)
                         }
 
-                        // Google Sign-In button (shows status when Firebase is not provisioned)
+                        // Google Sign-In Button
                         OutlinedButton(
                             onClick = { showGoogleNoticeDialog = true },
-                            shape = RoundedCornerShape(50),
+                            shape = RoundedCornerShape(14.dp),
                             border = BorderStroke(1.dp, SurfaceBorder),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = BgWhite,
                                 contentColor = TextBlack
                             ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 52.dp)
@@ -840,12 +752,12 @@ fun RegisterAuthScreen(
                             Surface(
                                 shape = CircleShape,
                                 color = ActionOrangeSoft,
-                                modifier = Modifier.size(26.dp)
+                                modifier = Modifier.size(24.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
                                         text = "G",
-                                        style = MaterialTheme.typography.titleSmall.copy(
+                                        style = MaterialTheme.typography.labelLarge.copy(
                                             fontWeight = FontWeight.ExtraBold
                                         ),
                                         color = ActionOrangeDark
@@ -854,43 +766,71 @@ fun RegisterAuthScreen(
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Daftar / Masuk dengan Google",
-                                style = MaterialTheme.typography.labelLarge,
+                                text = "Lanjutkan dengan Google",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
                                 color = TextBlack
                             )
                         }
 
-                        SecondaryGreenButton(
-                            text = "Masuk Cepat Tanpa Daftar (Akun Siti Rahma)",
+                        // Subtle Tonal Quick Demo Button
+                        OutlinedButton(
                             onClick = onQuickDemoLogin,
-                            testTag = "quick_demo_login_button",
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, FreshGreenBorder),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = FreshGreenSoft,
+                                contentColor = FreshGreenDark
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 50.dp)
+                                .testTag("quick_demo_login_button")
+                        ) {
+                            Text(
+                                text = "Masuk Cepat Akun Demo (Siti Rahma)",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = FreshGreenDark
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = FreshGreenDark,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
-
-                // Footer guarantee
-                Text(
-                    text = "Hanya Ambil Sendiri di warung terdekat • Tidak ada ongkir • Pembayaran aman lewat LUDES",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextGray,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                )
             }
+
+            // Clean Footer Guarantee
+            Text(
+                text = "Ambil Sendiri di warung terdekat • Tanpa ongkir • Pembayaran aman di LUDES",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                color = TextMuted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp, bottom = 8.dp)
+            )
         }
     }
 
     if (showGoogleNoticeDialog) {
         AlertDialog(
             onDismissRequest = { showGoogleNoticeDialog = false },
-            title = { Text("Login dengan Google Belum Aktif") },
+            containerColor = BgWhite,
+            title = { Text("Login dengan Google Belum Aktif", color = TextBlack) },
             text = {
                 Text(
                     "Daftar & Login dengan Google memerlukan integrasi Firebase yang saat ini belum diaktifkan. " +
-                        "Silakan daftar dengan Nama, Email & Password di layar ini atau masuk cepat dengan akun Siti Rahma."
+                        "Silakan daftar dengan Nama, Email & Password di layar ini atau masuk cepat dengan akun Siti Rahma.",
+                    color = TextGray
                 )
             },
             confirmButton = {
@@ -899,7 +839,7 @@ fun RegisterAuthScreen(
                         showGoogleNoticeDialog = false
                         authTab = 0
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = ActionOrange)
+                    colors = ButtonDefaults.buttonColors(containerColor = FreshGreenDark)
                 ) {
                     Text("Daftar dengan Email")
                 }
@@ -911,9 +851,124 @@ fun RegisterAuthScreen(
                         onQuickDemoLogin()
                     }
                 ) {
-                    Text("Masuk Akun Demo", color = FreshGreenDark)
+                    Text("Masuk Akun Demo", color = ActionOrangeDark)
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun AuthLabeledField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    leadingIcon: ImageVector,
+    testTag: String,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    isPassword: Boolean = false,
+    passwordVisible: Boolean = false,
+    onTogglePassword: (() -> Unit)? = null
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
+            color = TextBlack
+        )
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = {
+                Text(
+                    text = placeholder,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextMuted
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = null,
+                    tint = TextGray,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            trailingIcon = if (isPassword && onTogglePassword != null) {
+                {
+                    IconButton(onClick = onTogglePassword) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = if (passwordVisible) "Sembunyikan password" else "Lihat password",
+                            tint = TextGray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            } else {
+                null
+            },
+            visualTransformation = if (isPassword && !passwordVisible) {
+                PasswordVisualTransformation()
+            } else {
+                VisualTransformation.None
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = TextBlack,
+                unfocusedTextColor = TextBlack,
+                focusedContainerColor = BgWhite,
+                unfocusedContainerColor = BgLightGray,
+                focusedBorderColor = FreshGreenDark,
+                unfocusedBorderColor = SurfaceBorder,
+                cursorColor = FreshGreenDark
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(testTag)
+        )
+    }
+}
+
+@Composable
+private fun CleanPrimaryAuthButton(
+    text: String,
+    onClick: () -> Unit,
+    testTag: String,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = FreshGreenDark,
+            contentColor = Color.White
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp
+        ),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 15.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .testTag(testTag)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
         )
     }
 }
