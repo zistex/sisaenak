@@ -58,8 +58,10 @@ import com.example.ui.screens.CheckoutPickupScreen
 import com.example.ui.screens.FavoritesScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LiveTabScreen
+import com.example.ui.screens.LocationPickerScreen
 import com.example.ui.screens.MerchantQrScannerScreen
 import com.example.ui.screens.MerchantScreen
+import com.example.ui.screens.NotificationsScreen
 import com.example.ui.screens.OrderCompletedScreen
 import com.example.ui.screens.OrderDetailScreen
 import com.example.ui.screens.OrderPickupStatusScreen
@@ -111,6 +113,8 @@ private object Routes {
     const val MERCHANT = "merchant"
     const val MERCHANT_SCAN_QR = "merchant_scan_qr"
     const val SEARCH = "search"
+    const val NOTIFICATIONS = "notifications"
+    const val LOCATION_PICKER = "location_picker"
 
     fun productDetail(id: String) = "product_detail/${Uri.encode(id)}"
     fun checkout(id: String) = "checkout/${Uri.encode(id)}"
@@ -132,8 +136,6 @@ fun SisaEnakApp(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    var showLocationDialog by remember { mutableStateOf(false) }
-    var showNotificationsDialog by remember { mutableStateOf(false) }
     var contactStoreInfo by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     LaunchedEffect(uiState.snackbarMessage) {
@@ -165,8 +167,9 @@ fun SisaEnakApp(
             if (isMainTab) {
                 SisaEnakTopHeader(
                     location = uiState.userPrefs.location,
-                    onLocationClick = { showLocationDialog = true },
-                    onBellClick = { showNotificationsDialog = true }
+                    onLocationClick = { navController.navigate(Routes.LOCATION_PICKER) },
+                    onBellClick = { navController.navigate(Routes.NOTIFICATIONS) },
+                    unreadNotificationCount = uiState.unreadNotificationCount
                 )
             }
         },
@@ -258,6 +261,41 @@ fun SisaEnakApp(
                         },
                         onOpenLiveTab = { switchTab(MainTab.LIVE) },
                         onOpenWallet = { navController.navigate(Routes.WALLET) }
+                    )
+                }
+
+                // HALAMAN ATUR TITIK LOKASI (Marker Map)
+                composable(Routes.LOCATION_PICKER) {
+                    LocationPickerScreen(
+                        uiState = uiState,
+                        onBack = { navController.popBackStack() },
+                        onConfirmLocation = { label, lat, lng ->
+                            viewModel.updateLocation(label, lat, lng)
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                // HALAMAN NOTIFIKASI
+                composable(Routes.NOTIFICATIONS) {
+                    NotificationsScreen(
+                        uiState = uiState,
+                        onBack = { navController.popBackStack() },
+                        onMarkAllRead = { viewModel.markAllNotificationsRead() },
+                        onClickNotification = { notif ->
+                            viewModel.markNotificationRead(notif.id)
+                            when (val target = notif.target) {
+                                is NotificationTarget.ProductDetail -> {
+                                    viewModel.recordProductViewed(target.productId)
+                                    navController.navigate(Routes.productDetail(target.productId))
+                                }
+                                NotificationTarget.OrdersTab -> switchTab(MainTab.PESANAN)
+                                NotificationTarget.LiveTab -> switchTab(MainTab.LIVE)
+                                NotificationTarget.Wallet -> navController.navigate(Routes.WALLET)
+                                NotificationTarget.Vouchers -> navController.navigate(Routes.VOUCHERS)
+                                NotificationTarget.Search -> navController.navigate(Routes.SEARCH)
+                            }
+                        }
                     )
                 }
 
@@ -582,84 +620,6 @@ fun SisaEnakApp(
                 }
             }
         }
-    }
-
-    // Location Picker Dialog (Bandung Neighborhoods, zero typing)
-    if (showLocationDialog) {
-        val areas = listOf(
-            "Bandung - Dago",
-            "Bandung - Dipatiukur",
-            "Bandung - Riau",
-            "Bandung - Cihampelas",
-            "Bandung - Buah Batu"
-        )
-        AlertDialog(
-            onDismissRequest = { showLocationDialog = false },
-            title = { Text("Pilih Lokasi Pengambilan") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    areas.forEach { area ->
-                        val selected = uiState.userPrefs.location == area
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (selected) FreshGreenSoft else BgLightGray,
-                            border = BorderStroke(1.dp, if (selected) FreshGreen else SurfaceBorder),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    viewModel.updateLocation(area)
-                                    showLocationDialog = false
-                                }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Filled.LocationOn, contentDescription = null, tint = FreshGreenDark)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(area, style = MaterialTheme.typography.titleSmall, color = TextBlack)
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showLocationDialog = false }) { Text("Tutup") }
-            }
-        )
-    }
-
-    // Notification Bell Dialog
-    if (showNotificationsDialog) {
-        AlertDialog(
-            onDismissRequest = { showNotificationsDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Notifications, contentDescription = null, tint = ActionOrange)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Notifikasi Sisa Enak")
-                }
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Surface(shape = RoundedCornerShape(12.dp), color = FreshGreenSoft) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text("Bakery Dago - Diskon 60%", style = MaterialTheme.typography.titleSmall, color = FreshGreenDark)
-                            Text("Masih ada 3 kantong roti sisa hari ini. Ambil sebelum 21.00!", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                    Surface(shape = RoundedCornerShape(12.dp), color = BgLightGray) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text("Warung Bu Sari Sedang LIVE", style = MaterialTheme.typography.titleSmall, color = TextBlack)
-                            Text("1.2rb penonton sedang berebut kantong hemat Rp10.000.", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showNotificationsDialog = false }) { Text("Oke") }
-            }
-        )
     }
 
     // Contact Store Dialog (Hubungi Toko)

@@ -112,3 +112,90 @@ fun resolveProductGalleryKeys(
     }
     return base.distinct().take(3)
 }
+
+data class MapAreaPreset(
+    val label: String,
+    val shortName: String,
+    val streetHint: String,
+    val lat: Double,
+    val lng: Double
+)
+
+val bandungAreaPresets = listOf(
+    MapAreaPreset("Bandung - Dago", "Dago", "Jl. Ir. H. Juanda / Dago", -6.8904, 107.6134),
+    MapAreaPreset("Bandung - Dipatiukur", "Dipatiukur", "Jl. Dipatiukur & Sekitar ITB", -6.8935, 107.6176),
+    MapAreaPreset("Bandung - Riau", "Riau", "Jl. LLRE Martadinata (Riau)", -6.9062, 107.6198),
+    MapAreaPreset("Bandung - Cihampelas", "Cihampelas", "Jl. Cihampelas & Tamansari", -6.8958, 107.6038),
+    MapAreaPreset("Bandung - Cisitu", "Cisitu", "Jl. Cisitu & Siliwangi", -6.8834, 107.6085),
+    MapAreaPreset("Bandung - Buah Batu", "Buah Batu", "Jl. Buah Batu Tengah", -6.9338, 107.6245),
+    MapAreaPreset("Bandung - Braga", "Braga", "Jl. Braga & Balai Kota", -6.9175, 107.6094)
+)
+
+fun storeCoordinatesForProduct(productId: String, storeAddress: String): Pair<Double, Double> {
+    return when (productId) {
+        "prod_bakery_dago" -> -6.8904 to 107.6134
+        "prod_warung_bu_sari" -> -6.8891 to 107.6121
+        "prod_warteg_bahari" -> -6.8962 to 107.6129
+        "prod_martabak_simpang" -> -6.8935 to 107.6176
+        "prod_buah_segar" -> -6.8878 to 107.6194
+        "prod_roti_tawar_sore" -> -6.8834 to 107.6085
+        "prod_kue_subuh_teh_rina" -> -6.8855 to 107.6052
+        "prod_salad_buah_dago" -> -6.8958 to 107.6038
+        else -> {
+            val addr = storeAddress.lowercase()
+            when {
+                "dipatiukur" in addr -> -6.8935 to 107.6176
+                "riau" in addr || "martadinata" in addr -> -6.9062 to 107.6198
+                "cihampelas" in addr -> -6.8958 to 107.6038
+                "cisitu" in addr || "siliwangi" in addr -> -6.8834 to 107.6085
+                "buah batu" in addr -> -6.9338 to 107.6245
+                "braga" in addr -> -6.9175 to 107.6094
+                else -> -6.8915 to 107.6142
+            }
+        }
+    }
+}
+
+fun haversineDistanceKm(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+    val earthRadiusKm = 6371.0
+    val dLat = Math.toRadians(lat2 - lat1)
+    val dLng = Math.toRadians(lng2 - lng1)
+    val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+        kotlin.math.cos(Math.toRadians(lat1)) * kotlin.math.cos(Math.toRadians(lat2)) *
+        kotlin.math.sin(dLng / 2) * kotlin.math.sin(dLng / 2)
+    val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+    return earthRadiusKm * c
+}
+
+fun formatDistanceFromKm(km: Double): String {
+    val safeKm = km.coerceAtLeast(0.05)
+    return if (safeKm < 0.95) {
+        val meters = ((safeKm * 1000.0) / 50.0).let { kotlin.math.round(it) * 50 }.toInt().coerceAtLeast(50)
+        "${meters}m"
+    } else {
+        String.format(Locale.US, "%.1f km", safeKm)
+    }
+}
+
+fun computeStoreDistanceText(
+    productId: String,
+    storeAddress: String,
+    userLat: Double,
+    userLng: Double
+): String {
+    val (sLat, sLng) = storeCoordinatesForProduct(productId, storeAddress)
+    val km = haversineDistanceKm(userLat, userLng, sLat, sLng)
+    return formatDistanceFromKm(km)
+}
+
+fun nearestBandungAreaLabel(lat: Double, lng: Double): String {
+    val closest = bandungAreaPresets.minByOrNull { preset ->
+        haversineDistanceKm(lat, lng, preset.lat, preset.lng)
+    } ?: return "Bandung - Dago"
+    val distKm = haversineDistanceKm(lat, lng, closest.lat, closest.lng)
+    return if (distKm <= 3.5) {
+        closest.label
+    } else {
+        String.format(Locale.US, "Titik Peta (%.3f, %.3f)", lat, lng)
+    }
+}

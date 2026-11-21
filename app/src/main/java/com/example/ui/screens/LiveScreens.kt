@@ -481,7 +481,7 @@ private fun TikTokLiveStreamPage(
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
                     Row(
-                        modifier = Modifier.padding(start = 4.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+                        modifier = Modifier.padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
@@ -498,7 +498,7 @@ private fun TikTokLiveStreamPage(
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Column(modifier = Modifier.widthIn(max = 150.dp)) {
+                        Column(modifier = Modifier.widthIn(max = 175.dp)) {
                             Text(
                                 text = product.storeName,
                                 style = MaterialTheme.typography.labelLarge.copy(fontSize = 13.sp),
@@ -518,33 +518,8 @@ private fun TikTokLiveStreamPage(
                                     text = "${product.distanceText} • Ambil Sendiri",
                                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                     color = Color.White.copy(alpha = 0.85f),
-                                    maxLines = 1
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = if (product.isFavorite) FreshGreen else ActionOrange,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(50))
-                                .clickable { onToggleFavorite() }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = if (product.isFavorite) Icons.Filled.Check else Icons.Filled.Add,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Spacer(modifier = Modifier.width(2.dp))
-                                Text(
-                                    text = if (product.isFavorite) "Disukai" else "Ikuti",
-                                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp),
-                                    color = Color.White
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }

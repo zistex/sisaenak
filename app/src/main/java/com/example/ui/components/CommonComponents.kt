@@ -116,6 +116,7 @@ fun SisaEnakTopHeader(
     location: String,
     onLocationClick: () -> Unit,
     onBellClick: () -> Unit,
+    unreadNotificationCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -221,13 +222,15 @@ fun SisaEnakTopHeader(
                             tint = TextBlack,
                             modifier = Modifier.size(24.dp)
                         )
-                        Box(
-                            modifier = Modifier
-                                .size(9.dp)
-                                .clip(CircleShape)
-                                .background(ActionOrange)
-                                .align(Alignment.TopEnd)
-                        )
+                        if (unreadNotificationCount > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .size(9.dp)
+                                    .clip(CircleShape)
+                                    .background(ActionOrange)
+                                    .align(Alignment.TopEnd)
+                            )
+                        }
                     }
                 }
             }

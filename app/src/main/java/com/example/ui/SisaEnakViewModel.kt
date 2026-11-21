@@ -16,6 +16,7 @@ import com.example.data.UserProfilePrefs
 import com.example.data.ViewedHistoryEntity
 import com.example.data.VoucherItem
 import com.example.data.WithdrawRequestEntity
+import com.example.data.computeStoreDistanceText
 import com.example.data.formatRupiah
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,6 +35,33 @@ data class LiveComment(
     val timeLabel: String = "Baru saja"
 )
 
+enum class NotificationCategory(val label: String) {
+    PESANAN("Pesanan"),
+    LIVE("Live"),
+    PROMO("Promo"),
+    DOMPET("Dompet")
+}
+
+sealed class NotificationTarget {
+    data class ProductDetail(val productId: String) : NotificationTarget()
+    data object OrdersTab : NotificationTarget()
+    data object LiveTab : NotificationTarget()
+    data object Wallet : NotificationTarget()
+    data object Vouchers : NotificationTarget()
+    data object Search : NotificationTarget()
+}
+
+data class AppNotification(
+    val id: String,
+    val title: String,
+    val message: String,
+    val timeLabel: String,
+    val category: NotificationCategory,
+    val isRead: Boolean,
+    val target: NotificationTarget,
+    val isRecent: Boolean = true
+)
+
 data class SisaEnakUiState(
     val products: List<ProductEntity> = emptyList(),
     val liveProducts: List<ProductEntity> = emptyList(),
@@ -43,6 +71,7 @@ data class SisaEnakUiState(
     val viewedHistory: List<ViewedHistoryEntity> = emptyList(),
     val withdrawRequests: List<WithdrawRequestEntity> = emptyList(),
     val productReviews: List<ProductReviewEntity> = emptyList(),
+    val notifications: List<AppNotification> = emptyList(),
     val userPrefs: UserProfilePrefs = UserProfilePrefs(),
     val isAuthReady: Boolean = false,
     val searchQuery: String = "",
@@ -54,6 +83,9 @@ data class SisaEnakUiState(
     val liveComments: List<LiveComment> = defaultLiveComments(),
     val vouchers: List<VoucherItem> = defaultVouchers()
 ) {
+    val unreadNotificationCount: Int
+        get() = notifications.count { !it.isRead }
+
     val totalFavoritesCount: Int
         get() = favoriteStores.size + favoriteProducts.size
 
@@ -131,6 +163,9 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
     private val lastCreatedOrderId = MutableStateFlow<String?>(null)
     private val snackbarMessage = MutableStateFlow<String?>(null)
     private val liveComments = MutableStateFlow(defaultLiveComments())
+    private val readNotificationIds = MutableStateFlow(
+        setOf("notif_voucher_antisisa", "notif_wallet_info", "notif_reminder_evening")
+    )
 
     private val dataFlow = combine(
         repository.products,
@@ -161,17 +196,38 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
         ) { h, w, r -> Triple(h, w, r) },
         repository.userPrefs,
         uiInputsFlow,
-        combine(snackbarMessage, liveComments) { snack, comments -> snack to comments }
-    ) { data, (history, withdraws, reviews), prefs, inputs, (snack, comments) ->
-        SisaEnakUiState(
-            products = data.products,
+        combine(snackbarMessage, liveComments, readNotificationIds) { snack, comments, readIds ->
+            Triple(snack, comments, readIds)
+        }
+    ) { data, (history, withdraws, reviews), prefs, inputs, (snack, comments, readIds) ->
+        val builtNotifications = buildAppNotifications(
+            orders = data.orders,
+            withdrawRequests = withdraws,
             liveProducts = data.liveProducts,
-            favoriteProducts = data.favProducts,
+            readIds = readIds
+        )
+        fun withUserDistance(list: List<ProductEntity>): List<ProductEntity> =
+            list.map { p ->
+                p.copy(
+                    distanceText = computeStoreDistanceText(
+                        productId = p.id,
+                        storeAddress = p.storeAddress,
+                        userLat = prefs.userLat,
+                        userLng = prefs.userLng
+                    )
+                )
+            }
+
+        SisaEnakUiState(
+            products = withUserDistance(data.products),
+            liveProducts = withUserDistance(data.liveProducts),
+            favoriteProducts = withUserDistance(data.favProducts),
             favoriteStores = data.favStores,
             orders = data.orders,
             viewedHistory = history,
             withdrawRequests = withdraws,
             productReviews = reviews,
+            notifications = builtNotifications,
             userPrefs = prefs,
             isAuthReady = true,
             searchQuery = inputs.query,
@@ -187,6 +243,103 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = SisaEnakUiState()
     )
+
+    private fun buildAppNotifications(
+        orders: List<OrderEntity>,
+        withdrawRequests: List<WithdrawRequestEntity>,
+        liveProducts: List<ProductEntity>,
+        readIds: Set<String>
+    ): List<AppNotification> {
+        val list = mutableListOf<AppNotification>()
+
+        orders.filter { it.status == com.example.data.OrderStatus.BELUM_DIAMBIL.name }
+            .take(2)
+            .forEach { order ->
+                val id = "notif_order_${order.id}"
+                list += AppNotification(
+                    id = id,
+                    title = "Siap diambil: ${order.productTitle}",
+                    message = "Tunjukkan kode QR ${order.id} di ${order.storeName} pada jam ${order.pickupSlot}.",
+                    timeLabel = "Baru saja",
+                    category = NotificationCategory.PESANAN,
+                    isRead = readIds.contains(id),
+                    target = NotificationTarget.OrdersTab,
+                    isRecent = true
+                )
+            }
+
+        withdrawRequests.take(1).forEach { w ->
+            val id = "notif_wd_${w.id}"
+            list += AppNotification(
+                id = id,
+                title = "Penarikan Saldo ${formatRupiah(w.amountRp)}",
+                message = "Status: ${w.status} menuju ${w.destinationLabel}.",
+                timeLabel = "Hari ini",
+                category = NotificationCategory.DOMPET,
+                isRead = readIds.contains(id),
+                target = NotificationTarget.Wallet,
+                isRecent = true
+            )
+        }
+
+        val liveCount = liveProducts.count { it.stock > 0 }.coerceAtLeast(1)
+        list += AppNotification(
+            id = "notif_live_busari",
+            title = "Warung Bu Sari & $liveCount toko sedang LIVE",
+            message = "1.2rb penonton sedang berebut kantong hemat Rp10.000. Tonton langsung & amankan stok!",
+            timeLabel = "5 mnt lalu",
+            category = NotificationCategory.LIVE,
+            isRead = readIds.contains("notif_live_busari"),
+            target = NotificationTarget.LiveTab,
+            isRecent = true
+        )
+
+        list += AppNotification(
+            id = "notif_promo_bakery",
+            title = "Bakery Dago — Diskon hingga 60%",
+            message = "Tersisa kantong roti croissant & pastry fresh hari ini. Ambil sendiri sebelum jam 21.00!",
+            timeLabel = "18 mnt lalu",
+            category = NotificationCategory.PROMO,
+            isRead = readIds.contains("notif_promo_bakery"),
+            target = NotificationTarget.ProductDetail("prod_bakery_dago"),
+            isRecent = true
+        )
+
+        list += AppNotification(
+            id = "notif_voucher_antisisa",
+            title = "Voucher ANTISISA70 aktif untukmu",
+            message = "Nikmati potongan Rp3.000 untuk kategori Roti, Nasi, Jajanan & Buah tanpa minimum ongkir.",
+            timeLabel = "2 jam lalu",
+            category = NotificationCategory.PROMO,
+            isRead = readIds.contains("notif_voucher_antisisa"),
+            target = NotificationTarget.Vouchers,
+            isRecent = false
+        )
+
+        list += AppNotification(
+            id = "notif_wallet_info",
+            title = "Saldo Dompet Sisa Enak siap ditarik",
+            message = "Kelola saldo refund & ajukan tarik saldo ke rekening bank atau e-wallet kapan saja.",
+            timeLabel = "Hari ini",
+            category = NotificationCategory.DOMPET,
+            isRead = readIds.contains("notif_wallet_info"),
+            target = NotificationTarget.Wallet,
+            isRecent = false
+        )
+
+        list += AppNotification(
+            id = "notif_reminder_evening",
+            title = "Waktunya berburu makanan sisa enak!",
+            message = "Cek warung terdekat di Bandung dengan filter jarak & harga di menu Pencarian.",
+            timeLabel = "Kemarin",
+            category = NotificationCategory.PROMO,
+            isRead = readIds.contains("notif_reminder_evening"),
+            target = NotificationTarget.Search,
+            isRecent = false
+        )
+
+        return list
+    }
 
     private data class DataSnapshot(
         val products: List<ProductEntity>,
@@ -291,10 +444,10 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun updateLocation(location: String) {
+    fun updateLocation(location: String, lat: Double, lng: Double) {
         viewModelScope.launch {
-            repository.updateLocation(location)
-            snackbarMessage.value = "Lokasi diubah ke $location"
+            repository.updateLocation(location, lat, lng)
+            snackbarMessage.value = "Acuan lokasi diatur ke $location"
         }
     }
 
@@ -426,6 +579,16 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
             repository.rejectMerchantOrder(orderId)
             snackbarMessage.value = "Pesanan ditolak & dana dikembalikan ke Saldo pembeli."
         }
+    }
+
+    fun markNotificationRead(id: String) {
+        readNotificationIds.value = readNotificationIds.value + id
+    }
+
+    fun markAllNotificationsRead() {
+        val allIds = uiState.value.notifications.map { it.id }.toSet()
+        readNotificationIds.value = readNotificationIds.value + allIds
+        snackbarMessage.value = "Semua notifikasi ditandai sudah dibaca"
     }
 
     fun clearSnackbar() {

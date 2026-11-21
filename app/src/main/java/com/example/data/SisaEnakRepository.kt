@@ -66,8 +66,8 @@ class SisaEnakRepository(
         )
     }
 
-    suspend fun updateLocation(location: String) {
-        prefsRepo.updateLocation(location)
+    suspend fun updateLocation(location: String, lat: Double, lng: Double) {
+        prefsRepo.updateLocation(location, lat, lng)
     }
 
     suspend fun updateNotificationHour(hour: String) {

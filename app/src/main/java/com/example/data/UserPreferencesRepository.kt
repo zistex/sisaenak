@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -18,6 +19,8 @@ data class UserProfilePrefs(
     val userName: String = "Siti Rahma",
     val userEmail: String = "siti.rahma@gmail.com",
     val location: String = "Bandung - Dago",
+    val userLat: Double = -6.8904,
+    val userLng: Double = 107.6134,
     val walletBalanceRp: Int = 45000,
     val totalSavedRp: Int = 128000,
     val bagsRescued: Int = 12,
@@ -35,6 +38,8 @@ class UserPreferencesRepository(private val context: Context) {
         val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         val IS_EMAIL_VERIFIED = booleanPreferencesKey("is_email_verified")
         val LOCATION = stringPreferencesKey("selected_location")
+        val USER_LAT = doublePreferencesKey("user_lat")
+        val USER_LNG = doublePreferencesKey("user_lng")
         val WALLET_BALANCE = intPreferencesKey("wallet_balance_rp")
         val TOTAL_SAVED = intPreferencesKey("total_saved_rp")
         val BAGS_RESCUED = intPreferencesKey("bags_rescued")
@@ -46,6 +51,8 @@ class UserPreferencesRepository(private val context: Context) {
             userName = prefs[Keys.USER_NAME] ?: "Siti Rahma",
             userEmail = prefs[Keys.USER_EMAIL] ?: "siti.rahma@gmail.com",
             location = prefs[Keys.LOCATION] ?: "Bandung - Dago",
+            userLat = prefs[Keys.USER_LAT] ?: -6.8904,
+            userLng = prefs[Keys.USER_LNG] ?: 107.6134,
             walletBalanceRp = prefs[Keys.WALLET_BALANCE] ?: 45000,
             totalSavedRp = prefs[Keys.TOTAL_SAVED] ?: 128000,
             bagsRescued = prefs[Keys.BAGS_RESCUED] ?: 12,
@@ -106,8 +113,12 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
-    suspend fun updateLocation(location: String) {
-        context.dataStore.edit { it[Keys.LOCATION] = location }
+    suspend fun updateLocation(location: String, lat: Double, lng: Double) {
+        context.dataStore.edit {
+            it[Keys.LOCATION] = location
+            it[Keys.USER_LAT] = lat
+            it[Keys.USER_LNG] = lng
+        }
     }
 
     suspend fun updateNotificationHour(hour: String) {
