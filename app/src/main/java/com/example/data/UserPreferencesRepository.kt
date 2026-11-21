@@ -1,0 +1,132 @@
+package com.example.data
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "sisa_enak_prefs")
+
+data class UserProfilePrefs(
+    val userName: String = "Siti Rahma",
+    val userEmail: String = "siti.rahma@gmail.com",
+    val location: String = "Bandung - Dago",
+    val walletBalanceRp: Int = 45000,
+    val totalSavedRp: Int = 128000,
+    val bagsRescued: Int = 12,
+    val notificationHour: String = "19.00",
+    val isLoggedIn: Boolean = false,
+    val isEmailVerified: Boolean = false
+)
+
+class UserPreferencesRepository(private val context: Context) {
+
+    private object Keys {
+        val USER_NAME = stringPreferencesKey("user_name")
+        val USER_EMAIL = stringPreferencesKey("user_email")
+        val USER_PASSWORD = stringPreferencesKey("user_password")
+        val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
+        val IS_EMAIL_VERIFIED = booleanPreferencesKey("is_email_verified")
+        val LOCATION = stringPreferencesKey("selected_location")
+        val WALLET_BALANCE = intPreferencesKey("wallet_balance_rp")
+        val TOTAL_SAVED = intPreferencesKey("total_saved_rp")
+        val BAGS_RESCUED = intPreferencesKey("bags_rescued")
+        val NOTIFICATION_HOUR = stringPreferencesKey("notification_hour")
+    }
+
+    val userPrefs: Flow<UserProfilePrefs> = context.dataStore.data.map { prefs ->
+        UserProfilePrefs(
+            userName = prefs[Keys.USER_NAME] ?: "Siti Rahma",
+            userEmail = prefs[Keys.USER_EMAIL] ?: "siti.rahma@gmail.com",
+            location = prefs[Keys.LOCATION] ?: "Bandung - Dago",
+            walletBalanceRp = prefs[Keys.WALLET_BALANCE] ?: 45000,
+            totalSavedRp = prefs[Keys.TOTAL_SAVED] ?: 128000,
+            bagsRescued = prefs[Keys.BAGS_RESCUED] ?: 12,
+            notificationHour = prefs[Keys.NOTIFICATION_HOUR] ?: "19.00",
+            isLoggedIn = prefs[Keys.IS_LOGGED_IN] ?: false,
+            isEmailVerified = prefs[Keys.IS_EMAIL_VERIFIED] ?: false
+        )
+    }
+
+    suspend fun registerAndVerifyUser(name: String, email: String, password: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.USER_NAME] = name.trim()
+            prefs[Keys.USER_EMAIL] = email.trim().lowercase()
+            prefs[Keys.USER_PASSWORD] = password
+            prefs[Keys.IS_EMAIL_VERIFIED] = true
+            prefs[Keys.IS_LOGGED_IN] = true
+        }
+    }
+
+    suspend fun loginWithEmail(email: String, password: String): Pair<Boolean, String> {
+        val prefs = context.dataStore.data.first()
+        val cleanEmail = email.trim().lowercase()
+        val savedEmail = prefs[Keys.USER_EMAIL]
+        val savedPass = prefs[Keys.USER_PASSWORD]
+
+        return when {
+            savedEmail != null && savedPass != null &&
+                cleanEmail == savedEmail && password == savedPass -> {
+                context.dataStore.edit {
+                    it[Keys.IS_LOGGED_IN] = true
+                    it[Keys.IS_EMAIL_VERIFIED] = true
+                }
+                true to "Selamat datang kembali, ${prefs[Keys.USER_NAME] ?: "Sahabat Sisa Enak"}!"
+            }
+            cleanEmail == "siti.rahma@gmail.com" && password == "123456" -> {
+                loginDemoSiti()
+                true to "Berhasil masuk sebagai Siti Rahma!"
+            }
+            else -> {
+                false to "Email atau password tidak cocok. Silakan daftar atau cek lagi."
+            }
+        }
+    }
+
+    suspend fun loginDemoSiti() {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.USER_NAME] = "Siti Rahma"
+            prefs[Keys.USER_EMAIL] = "siti.rahma@gmail.com"
+            prefs[Keys.USER_PASSWORD] = "123456"
+            prefs[Keys.IS_EMAIL_VERIFIED] = true
+            prefs[Keys.IS_LOGGED_IN] = true
+        }
+    }
+
+    suspend fun logout() {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.IS_LOGGED_IN] = false
+        }
+    }
+
+    suspend fun updateLocation(location: String) {
+        context.dataStore.edit { it[Keys.LOCATION] = location }
+    }
+
+    suspend fun updateNotificationHour(hour: String) {
+        context.dataStore.edit { it[Keys.NOTIFICATION_HOUR] = hour }
+    }
+
+    suspend fun adjustWallet(deltaRp: Int) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.WALLET_BALANCE] ?: 45000
+            prefs[Keys.WALLET_BALANCE] = (current + deltaRp).coerceAtLeast(0)
+        }
+    }
+
+    suspend fun recordBagRescued(savedRp: Int) {
+        context.dataStore.edit { prefs ->
+            val currentSaved = prefs[Keys.TOTAL_SAVED] ?: 128000
+            val currentBags = prefs[Keys.BAGS_RESCUED] ?: 12
+            prefs[Keys.TOTAL_SAVED] = currentSaved + savedRp.coerceAtLeast(0)
+            prefs[Keys.BAGS_RESCUED] = currentBags + 1
+        }
+    }
+}
