@@ -1000,10 +1000,10 @@ private fun CategoryFilterCard(
         shape = RoundedCornerShape(18.dp),
         color = BgWhite,
         border = BorderStroke(
-            width = if (selected) 2.dp else 1.dp,
+            width = if (selected) 1.dp else 0.8.dp,
             color = if (selected) ActionOrange else SurfaceBorder
         ),
-        shadowElevation = if (selected) 2.dp else 1.dp,
+        shadowElevation = if (selected) 1.dp else 0.dp,
         modifier = Modifier
             .testTag(testTag)
             .width(84.dp)

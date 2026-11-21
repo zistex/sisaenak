@@ -303,14 +303,14 @@ fun SisaEnakBottomBar(
         label = "pulseAlpha"
     )
 
-    val barContainer = if (isDarkBar) Color(0xFF0B0F19) else BgWhite
-    val inactiveTint = if (isDarkBar) Color(0xFFCBD5E1) else TextGray
-    val indicatorTint = if (isDarkBar) Color(0xFF1E293B) else ActionOrangeSoft
-    val dotBorder = if (isDarkBar) Color(0xFF0B0F19) else BgWhite
+    val barContainer = BgWhite
+    val inactiveTint = TextGray
+    val indicatorTint = ActionOrangeSoft
+    val dotBorder = BgWhite
 
     NavigationBar(
         containerColor = barContainer,
-        tonalElevation = 8.dp,
+        tonalElevation = 0.dp,
         windowInsets = WindowInsets.navigationBars
     ) {
         MainTab.entries.forEach { tab ->

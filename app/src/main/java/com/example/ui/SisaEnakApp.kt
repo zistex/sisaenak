@@ -176,8 +176,7 @@ fun SisaEnakApp(
                     currentRoute = currentRoute,
                     hasLiveNow = uiState.hasLiveNow,
                     activeOrderCount = activeOrderCount,
-                    onSelectTab = { switchTab(it) },
-                    isDarkBar = currentRoute == Routes.LIVE
+                    onSelectTab = { switchTab(it) }
                 )
             }
         }
