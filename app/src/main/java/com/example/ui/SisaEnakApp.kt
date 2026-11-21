@@ -307,6 +307,7 @@ fun SisaEnakApp(
                         onPlaceLiveOrder = { product, onCreated ->
                             viewModel.placeOrder(product, fromLive = true, onOrderCreated = onCreated)
                         },
+                        onSendComment = { text, productId -> viewModel.sendLiveComment(text, productId) },
                         onNavigateToOrders = { switchTab(MainTab.PESANAN) }
                     )
                 }

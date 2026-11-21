@@ -27,7 +27,11 @@ import kotlinx.coroutines.launch
 data class LiveComment(
     val id: String,
     val author: String,
-    val text: String
+    val text: String,
+    val isSelf: Boolean = false,
+    val isHost: Boolean = false,
+    val productId: String? = null,
+    val timeLabel: String = "Baru saja"
 )
 
 data class SisaEnakUiState(
@@ -69,11 +73,27 @@ data class SisaEnakUiState(
 }
 
 private fun defaultLiveComments() = listOf(
-    LiveComment("c1", "Ibu Ani", "masih ada rotinya kak?"),
-    LiveComment("c2", "Rizky Mhs", "enak banget kemarin beli di sini!"),
-    LiveComment("c3", "Teh Dewi", "aku otw ambil ya bu sari, jangan habis dulu"),
-    LiveComment("c4", "Dina", "porsinya banyak beneran kak?"),
-    LiveComment("c5", "Budi Dago", "harga 10rb dapat segini murah pisan")
+    // Bakery Dago
+    LiveComment("c_bd_0", "Bakery Dago", "Halo semuanya! Kantong kejutan roti malam ini isi croissant & roti manis fresh ya!", isHost = true, productId = "prod_bakery_dago", timeLabel = "5 mnt lalu"),
+    LiveComment("c_bd_1", "Ibu Ani", "Kak, roti manisnya dapat berapa pcs per kantong?", productId = "prod_bakery_dago", timeLabel = "4 mnt lalu"),
+    LiveComment("c_bd_2", "Bakery Dago", "Biasanya 4-5 pcs mix croissant keju & roti cokelat kak, masih empuk banget!", isHost = true, productId = "prod_bakery_dago", timeLabel = "3 mnt lalu"),
+    LiveComment("c_bd_3", "Rizky Mhs", "Kemarin aku kebagian croissant almond + 3 roti sobek, worth it parah cuma 10rb 😍", productId = "prod_bakery_dago", timeLabel = "2 mnt lalu"),
+    LiveComment("c_bd_4", "Budi Dago", "Otw ambil ke Jl. Dago No. 88 ya kak, jangan habis dulu!", productId = "prod_bakery_dago", timeLabel = "1 mnt lalu"),
+
+    // Warung Bu Sari
+    LiveComment("c_bs_0", "Warung Bu Sari", "Selamat malam! Paket nasi lauk lengkap + gorengan hangat siap diambil sampai jam 18.00 ya!", isHost = true, productId = "prod_warung_bu_sari", timeLabel = "6 mnt lalu"),
+    LiveComment("c_bs_1", "Teh Dewi", "Bu Sari, hari ini lauknya ada ayam goreng atau rendang?", productId = "prod_warung_bu_sari", timeLabel = "4 mnt lalu"),
+    LiveComment("c_bs_2", "Warung Bu Sari", "Ada ayam serundeng, orek tempe, sama bakwan jagung hangat neng!", isHost = true, productId = "prod_warung_bu_sari", timeLabel = "3 mnt lalu"),
+    LiveComment("c_bs_3", "Dina", "Porsinya banyak beneran kak, bikin kenyang buat makan malam 👍", productId = "prod_warung_bu_sari", timeLabel = "1 mnt lalu"),
+
+    // Martabak Simpang Dago
+    LiveComment("c_ms_0", "Martabak Simpang", "Potongan martabak manis cokelat keju + kue basah baru dipacking nih kak!", isHost = true, productId = "prod_martabak_simpang", timeLabel = "5 mnt lalu"),
+    LiveComment("c_ms_1", "Farhan", "Keju susunya masih banyak kan bang?", productId = "prod_martabak_simpang", timeLabel = "3 mnt lalu"),
+    LiveComment("c_ms_2", "Salsa", "Barusan checkout 1 kantong, jaraknya cuma 600m dari kosan!", productId = "prod_martabak_simpang", timeLabel = "1 mnt lalu"),
+
+    // Warung Kue Teh Rina
+    LiveComment("c_tr_0", "Warung Kue Teh Rina", "Jajanan pasar campur lapis legit, dadar gulung & kue ku tanpa pengawet ya kak!", isHost = true, productId = "prod_kue_subuh_teh_rina", timeLabel = "5 mnt lalu"),
+    LiveComment("c_tr_1", "Nisa", "Dadar gulungnya lembut banget, langganan tiap sore 😍", productId = "prod_kue_subuh_teh_rina", timeLabel = "2 mnt lalu")
 )
 
 private fun defaultVouchers() = listOf(
@@ -358,15 +378,19 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun sendLiveComment(text: String) {
+    fun sendLiveComment(text: String, productId: String? = null) {
         val clean = text.trim()
         if (clean.isEmpty()) return
+        val currentUserName = uiState.value.userPrefs.userName.trim().ifBlank { "Siti Rahma" }
         val newComment = LiveComment(
-            id = "c_${System.currentTimeMillis()}",
-            author = "Siti Rahma",
-            text = clean
+            id = "c_${System.nanoTime()}",
+            author = currentUserName,
+            text = clean,
+            isSelf = true,
+            productId = productId,
+            timeLabel = "Baru saja"
         )
-        liveComments.value = (liveComments.value + newComment).takeLast(12)
+        liveComments.value = (liveComments.value + newComment).takeLast(60)
     }
 
     fun publishMerchantListing(

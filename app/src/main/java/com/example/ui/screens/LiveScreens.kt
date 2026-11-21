@@ -23,35 +23,46 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationOn
@@ -62,6 +73,7 @@ import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
@@ -83,6 +95,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,17 +104,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -110,6 +130,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.OrderEntity
 import com.example.data.PaymentMethod
 import com.example.data.ProductEntity
+import com.example.data.ProductReviewEntity
 import com.example.data.formatRupiah
 import com.example.ui.LiveComment
 import com.example.ui.SisaEnakUiState
@@ -132,6 +153,7 @@ import com.example.ui.theme.StarYellow
 import com.example.ui.theme.SurfaceBorder
 import com.example.ui.theme.TextBlack
 import com.example.ui.theme.TextGray
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -154,6 +176,7 @@ fun LiveTabScreen(
     onSelectSlot: (String) -> Unit,
     onSelectPayment: (PaymentMethod) -> Unit,
     onPlaceLiveOrder: (ProductEntity, (OrderEntity) -> Unit) -> Unit,
+    onSendComment: (String, String?) -> Unit,
     onNavigateToOrders: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -164,6 +187,7 @@ fun LiveTabScreen(
     var showGridOverlay by remember { mutableStateOf(false) }
     var activeOrderSheetProduct by remember { mutableStateOf<ProductEntity?>(null) }
     var completedLiveOrder by remember { mutableStateOf<OrderEntity?>(null) }
+    var activeCommentSheetProduct by remember { mutableStateOf<ProductEntity?>(null) }
 
     Box(
         modifier = modifier
@@ -183,18 +207,29 @@ fun LiveTabScreen(
                 modifier = Modifier.fillMaxSize()
             ) { pageIndex ->
                 val product = liveList[pageIndex]
+                val productSpecificComments = remember(uiState.liveComments, product.id) {
+                    uiState.liveComments.filter { it.productId == null || it.productId == product.id }
+                }
+                val productReviewCount = remember(uiState.productReviews, product.id) {
+                    uiState.productReviews.count { it.productId == product.id }
+                }
                 TikTokLiveStreamPage(
                     product = product,
                     pageIndex = pageIndex,
                     totalPages = liveList.size,
-                    comments = uiState.liveComments,
+                    comments = productSpecificComments,
+                    productReviewCount = productReviewCount,
                     onToggleFavorite = { onToggleFavorite(product.id) },
                     onOpenGrid = { showGridOverlay = true },
                     onOpenDirectOrder = {
                         onInitCheckout(product)
                         completedLiveOrder = null
                         activeOrderSheetProduct = product
-                    }
+                    },
+                    onOpenCommentSheet = {
+                        activeCommentSheetProduct = product
+                    },
+                    onSendComment = { text -> onSendComment(text, product.id) }
                 )
             }
         }
@@ -213,6 +248,38 @@ fun LiveTabScreen(
                     scope.launch { pagerState.animateScrollToPage(idx) }
                 },
                 onClose = { showGridOverlay = false }
+            )
+        }
+    }
+
+    // Bottom Sheet Percakapan Orang-Orang Terhadap Produk Live (dari ikon chat kanan)
+    val commentSheetProduct = activeCommentSheetProduct
+    if (commentSheetProduct != null) {
+        val commentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val liveChatForProduct = remember(uiState.liveComments, commentSheetProduct.id) {
+            uiState.liveComments.filter { it.productId == null || it.productId == commentSheetProduct.id }
+        }
+        val reviewsForProduct = remember(uiState.productReviews, commentSheetProduct.id) {
+            uiState.productReviews.filter { it.productId == commentSheetProduct.id }
+        }
+        ModalBottomSheet(
+            onDismissRequest = { activeCommentSheetProduct = null },
+            sheetState = commentSheetState,
+            containerColor = BgWhite,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            LiveProductCommentsSheetContent(
+                product = commentSheetProduct,
+                liveComments = liveChatForProduct,
+                productReviews = reviewsForProduct,
+                onSendComment = { text -> onSendComment(text, commentSheetProduct.id) },
+                onOpenDirectOrder = {
+                    activeCommentSheetProduct = null
+                    onInitCheckout(commentSheetProduct)
+                    completedLiveOrder = null
+                    activeOrderSheetProduct = commentSheetProduct
+                },
+                onClose = { activeCommentSheetProduct = null }
             )
         }
     }
@@ -270,15 +337,59 @@ private fun TikTokLiveStreamPage(
     pageIndex: Int,
     totalPages: Int,
     comments: List<LiveComment>,
+    productReviewCount: Int,
     onToggleFavorite: () -> Unit,
     onOpenGrid: () -> Unit,
-    onOpenDirectOrder: () -> Unit
+    onOpenDirectOrder: () -> Unit,
+    onOpenCommentSheet: () -> Unit,
+    onSendComment: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     var showLiveChat by remember { mutableStateOf(true) }
+    var commentDraft by remember { mutableStateOf("") }
     var likeCount by remember(product.id) { mutableIntStateOf(1240 + pageIndex * 180) }
     var isLiked by remember(product.id) { mutableStateOf(false) }
     val floatingHearts = remember { mutableStateListOf<FloatingHeart>() }
+    val autoViewerComments = remember(product.id) { mutableStateListOf<LiveComment>() }
+    val chatListState = rememberLazyListState()
+
+    val incomingViewerFeed = remember(product.id) {
+        listOf(
+            LiveComment("auto_${product.id}_1", "Rina Bandung", "baru gabung, ini ambilnya sampai jam berapa kak?"),
+            LiveComment("auto_${product.id}_2", "Fajar ITB", "langsung checkout di keranjang ya guys, kemarin aku kebagian!"),
+            LiveComment("auto_${product.id}_3", "Nadia", "masih hangat nggak nih? 😍"),
+            LiveComment("auto_${product.id}_4", product.storeName, "Masih fresh & siap diambil hari ini ya kak!", isHost = true)
+        )
+    }
+
+    LaunchedEffect(product.id) {
+        for (incoming in incomingViewerFeed) {
+            delay(5500)
+            autoViewerComments.add(incoming)
+        }
+    }
+
+    val allDisplayedComments = remember(comments, autoViewerComments.toList()) {
+        (comments + autoViewerComments).takeLast(35)
+    }
+
+    LaunchedEffect(allDisplayedComments.size) {
+        if (allDisplayedComments.isNotEmpty() && showLiveChat) {
+            runCatching { chatListState.animateScrollToItem(0) }
+        }
+    }
+
+    fun submitDraft(textToSend: String = commentDraft) {
+        val clean = textToSend.trim()
+        if (clean.isEmpty()) return
+        onSendComment(clean)
+        if (textToSend == commentDraft) {
+            commentDraft = ""
+            keyboardController?.hide()
+        }
+        showLiveChat = true
+    }
 
     val infiniteTransition = rememberInfiniteTransition(label = "tiktokLive")
     val zoomScale by infiniteTransition.animateFloat(
@@ -565,6 +676,7 @@ private fun TikTokLiveStreamPage(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .widthIn(max = 600.dp)
+                .imePadding()
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -577,27 +689,96 @@ private fun TikTokLiveStreamPage(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Running Chat Stream (toggled via comment icon on right rail)
+                    // Running Chat Stream (toggled via comment icon on right rail, faded top like TikTok Live)
                     AnimatedVisibility(visible = showLiveChat) {
+                        val authorColors = listOf(
+                            Color(0xFF4ADE80),
+                            Color(0xFF38BDF8),
+                            Color(0xFFFBBF24),
+                            Color(0xFFF472B6),
+                            Color(0xFFA78BFA)
+                        )
                         LazyColumn(
+                            state = chatListState,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(132.dp),
+                                .height(164.dp)
+                                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                                .drawWithContent {
+                                    drawContent()
+                                    drawRect(
+                                        brush = Brush.verticalGradient(
+                                            0.0f to Color.Transparent,
+                                            0.22f to Color.Black,
+                                            1.0f to Color.Black
+                                        ),
+                                        blendMode = BlendMode.DstIn
+                                    )
+                                },
                             verticalArrangement = Arrangement.spacedBy(5.dp),
                             reverseLayout = true
                         ) {
-                            items(comments.reversed(), key = { it.id }) { comment ->
+                            items(allDisplayedComments.reversed(), key = { it.id }) { comment ->
+                                val authorTint = when {
+                                    comment.isHost -> ActionOrange
+                                    comment.isSelf -> FreshGreen
+                                    else -> authorColors[kotlin.math.abs(comment.author.hashCode()) % authorColors.size]
+                                }
                                 Surface(
                                     shape = RoundedCornerShape(14.dp),
-                                    color = Color.Black.copy(alpha = 0.48f)
+                                    color = if (comment.isSelf) {
+                                        FreshGreenDark.copy(alpha = 0.55f)
+                                    } else {
+                                        Color.Black.copy(alpha = 0.48f)
+                                    },
+                                    border = if (comment.isSelf) {
+                                        BorderStroke(1.dp, FreshGreen.copy(alpha = 0.7f))
+                                    } else null
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        if (comment.isHost) {
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = ActionOrange,
+                                                modifier = Modifier.padding(end = 5.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Penjual",
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    ),
+                                                    color = Color.White,
+                                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                                )
+                                            }
+                                        } else if (comment.isSelf) {
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = FreshGreen,
+                                                modifier = Modifier.padding(end = 5.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Kamu",
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    ),
+                                                    color = Color.White,
+                                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                                )
+                                            }
+                                        }
                                         Text(
                                             text = "${comment.author}: ",
-                                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-                                            color = FreshGreen
+                                            style = MaterialTheme.typography.labelMedium.copy(
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = authorTint
                                         )
                                         Text(
                                             text = comment.text,
@@ -721,12 +902,13 @@ private fun TikTokLiveStreamPage(
                         }
                     )
 
-                    // Comment Visibility Toggle
+                    // Chat Icon on Right Rail -> Opens Bottom Sheet with Product Conversations
                     TikTokRailButton(
                         icon = Icons.Filled.ModeComment,
-                        label = "${comments.size}",
-                        tint = if (showLiveChat) Color.White else Color.White.copy(alpha = 0.55f),
-                        onClick = { showLiveChat = !showLiveChat }
+                        label = "${allDisplayedComments.size + productReviewCount}",
+                        tint = Color.White,
+                        onClick = onOpenCommentSheet,
+                        testTag = "live_chat_sheet_button"
                     )
 
                     // Share Live
@@ -794,6 +976,120 @@ private fun TikTokLiveStreamPage(
                     }
                 }
             }
+
+            // Quick-Tap Comment Pills + TikTok Live Bottom Comment Bar
+            val quickLiveReplies = listOf(
+                "Masih ada kak?",
+                "Otw ambil!",
+                "Enak banget 🔥",
+                "Sisa berapa?"
+            )
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(quickLiveReplies) { quickText ->
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = Color.Black.copy(alpha = 0.52f),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.24f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .clickable { submitDraft(quickText) }
+                    ) {
+                        Text(
+                            text = quickText,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = Color.Black.copy(alpha = 0.58f),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.28f)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ModeComment,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.72f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(modifier = Modifier.weight(1f)) {
+                            if (commentDraft.isEmpty()) {
+                                Text(
+                                    text = "Tambah komentar...",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                    color = Color.White.copy(alpha = 0.65f)
+                                )
+                            }
+                            BasicTextField(
+                                value = commentDraft,
+                                onValueChange = { commentDraft = it },
+                                singleLine = true,
+                                textStyle = TextStyle(
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Normal
+                                ),
+                                cursorBrush = SolidColor(ActionOrange),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                                keyboardActions = KeyboardActions(
+                                    onSend = { submitDraft() }
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("live_comment_input")
+                            )
+                        }
+                    }
+                }
+
+                val canSend = commentDraft.isNotBlank()
+                Surface(
+                    shape = CircleShape,
+                    color = if (canSend) ActionOrange else Color.Black.copy(alpha = 0.58f),
+                    border = BorderStroke(
+                        1.dp,
+                        if (canSend) ActionOrange else Color.White.copy(alpha = 0.28f)
+                    ),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable(enabled = canSend) { submitDraft() }
+                        .testTag("live_comment_send_button")
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Kirim komentar",
+                            tint = if (canSend) Color.White else Color.White.copy(alpha = 0.45f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -803,11 +1099,14 @@ private fun TikTokRailButton(
     icon: ImageVector,
     label: String,
     tint: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    testTag: String = ""
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
+        modifier = Modifier
+            .then(if (testTag.isNotEmpty()) Modifier.testTag(testTag) else Modifier)
+            .clickable { onClick() }
     ) {
         Surface(
             shape = CircleShape,
@@ -829,6 +1128,435 @@ private fun TikTokRailButton(
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
             color = Color.White
         )
+    }
+}
+
+private data class ProductConversationEntry(
+    val id: String,
+    val author: String,
+    val message: String,
+    val timeLabel: String,
+    val isHost: Boolean = false,
+    val isSelf: Boolean = false,
+    val ratingStars: Int? = null,
+    val baseLikes: Int = 2
+)
+
+@Composable
+private fun LiveProductCommentsSheetContent(
+    product: ProductEntity,
+    liveComments: List<LiveComment>,
+    productReviews: List<ProductReviewEntity>,
+    onSendComment: (String) -> Unit,
+    onOpenDirectOrder: () -> Unit,
+    onClose: () -> Unit
+) {
+    var sheetDraft by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val likedIds = remember { mutableStateMapOf<String, Boolean>() }
+    val listState = rememberLazyListState()
+
+    val entries = remember(liveComments, productReviews, product.id) {
+        val chatItems = liveComments.mapIndexed { idx, c ->
+            ProductConversationEntry(
+                id = "chat_${c.id}",
+                author = c.author,
+                message = c.text,
+                timeLabel = c.timeLabel,
+                isHost = c.isHost,
+                isSelf = c.isSelf,
+                baseLikes = if (c.isHost) 18 else (3 + (idx * 5) % 14)
+            )
+        }
+        val reviewItems = productReviews.mapIndexed { idx, r ->
+            ProductConversationEntry(
+                id = "rev_${r.id}",
+                author = r.reviewerName,
+                message = r.comment,
+                timeLabel = r.timeLabel.ifBlank { "Pembeli" },
+                ratingStars = r.rating,
+                baseLikes = 6 + (idx * 3) % 12
+            )
+        }
+        (chatItems + reviewItems).reversed()
+    }
+
+    LaunchedEffect(entries.size) {
+        if (entries.isNotEmpty()) {
+            runCatching { listState.animateScrollToItem(0) }
+        }
+    }
+
+    fun sendFromSheet(text: String = sheetDraft) {
+        val clean = text.trim()
+        if (clean.isEmpty()) return
+        onSendComment(clean)
+        if (text == sheetDraft) {
+            sheetDraft = ""
+            keyboardController?.hide()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 420.dp, max = 590.dp)
+            .imePadding()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 12.dp)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.ModeComment,
+                    contentDescription = null,
+                    tint = ActionOrange,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Percakapan Produk",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+                    color = TextBlack
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(shape = RoundedCornerShape(50), color = FreshGreenSoft) {
+                    Text(
+                        text = "${entries.size} pesan",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = FreshGreenDark,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
+            IconButton(onClick = onClose) {
+                Icon(Icons.Filled.Close, contentDescription = "Tutup percakapan", tint = TextGray)
+            }
+        }
+
+        // Product Context Card
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = BgLightGray,
+            border = BorderStroke(1.dp, SurfaceBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FoodProductImage(
+                    imageKey = product.imageKey,
+                    customImageUri = product.customImageUri,
+                    contentDescription = product.title,
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = product.title,
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                        color = TextBlack,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "${product.storeName} • ★ ${String.format(java.util.Locale.US, "%.1f", product.rating)} • Sisa ${product.stock}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextGray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "${formatRupiah(product.discountPrice)} • Ambil Sendiri",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.ExtraBold),
+                        color = ActionOrangeDark
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = onOpenDirectOrder,
+                    enabled = product.stock > 0,
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ActionOrange,
+                        contentColor = Color.White
+                    ),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                    modifier = Modifier.heightIn(min = 40.dp)
+                ) {
+                    Text(
+                        text = if (product.stock > 0) "Beli" else "Habis",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Conversation List
+        if (entries.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Belum ada percakapan untuk produk ini. Yuk mulai tanya penjual!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextGray
+                )
+            }
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(vertical = 4.dp)
+            ) {
+                items(entries, key = { it.id }) { entry ->
+                    val isLikedEntry = likedIds[entry.id] == true
+                    val likeTotal = entry.baseLikes + if (isLikedEntry) 1 else 0
+                    val avatarBg = when {
+                        entry.isHost -> ActionOrangeSoft
+                        entry.isSelf -> FreshGreenSoft
+                        entry.ratingStars != null -> Color(0xFFFFFBEB)
+                        else -> Color(0xFFEFF6FF)
+                    }
+                    val avatarTint = when {
+                        entry.isHost -> ActionOrangeDark
+                        entry.isSelf -> FreshGreenDark
+                        entry.ratingStars != null -> Color(0xFFD97706)
+                        else -> Color(0xFF1D4ED8)
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(avatarBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = entry.author.take(1).uppercase(),
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.ExtraBold),
+                                color = avatarTint
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = entry.author,
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = TextBlack
+                                )
+                                if (entry.isHost) {
+                                    Surface(shape = RoundedCornerShape(4.dp), color = ActionOrange) {
+                                        Text(
+                                            text = "Penjual",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.ExtraBold
+                                            ),
+                                            color = Color.White,
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                } else if (entry.isSelf) {
+                                    Surface(shape = RoundedCornerShape(4.dp), color = FreshGreen) {
+                                        Text(
+                                            text = "Kamu",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.ExtraBold
+                                            ),
+                                            color = Color.White,
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                } else if (entry.ratingStars != null) {
+                                    Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFFFFFBEB)) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Star,
+                                                contentDescription = null,
+                                                tint = StarYellow,
+                                                modifier = Modifier.size(10.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(2.dp))
+                                            Text(
+                                                text = "${entry.ratingStars}",
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                color = Color(0xFFB45309)
+                                            )
+                                        }
+                                    }
+                                }
+                                Text(
+                                    text = entry.timeLabel,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                    color = TextGray
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(
+                                text = entry.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextBlack
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { likedIds[entry.id] = !isLikedEntry }
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isLikedEntry) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = "Suka komentar",
+                                tint = if (isLikedEntry) LiveRed else TextGray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "$likeTotal",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                color = if (isLikedEntry) LiveRed else TextGray
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        HorizontalDivider(color = SurfaceBorder, modifier = Modifier.padding(vertical = 8.dp))
+
+        // Quick Replies inside Bottom Sheet
+        val quickQuestions = listOf(
+            "Masih ada kak?",
+            "Isinya apa aja?",
+            "Otw ambil sekarang!",
+            "Enak banget 🔥"
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(quickQuestions) { q ->
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = BgLightGray,
+                    border = BorderStroke(1.dp, SurfaceBorder),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .clickable { sendFromSheet(q) }
+                ) {
+                    Text(
+                        text = q,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                        color = TextBlack,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Input Comment Row inside Bottom Sheet
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = BgLightGray,
+                border = BorderStroke(1.dp, SurfaceBorder),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.CenterStart,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    if (sheetDraft.isEmpty()) {
+                        Text(
+                            text = "Tanya atau komentar soal produk ini...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextGray
+                        )
+                    }
+                    BasicTextField(
+                        value = sheetDraft,
+                        onValueChange = { sheetDraft = it },
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            color = TextBlack,
+                            fontSize = 14.sp
+                        ),
+                        cursorBrush = SolidColor(ActionOrange),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(onSend = { sendFromSheet() }),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("live_sheet_comment_input")
+                    )
+                }
+            }
+
+            val canSend = sheetDraft.isNotBlank()
+            Surface(
+                shape = CircleShape,
+                color = if (canSend) ActionOrange else SurfaceBorder,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(enabled = canSend) { sendFromSheet() }
+                    .testTag("live_sheet_comment_send")
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "Kirim pesan",
+                        tint = if (canSend) Color.White else TextGray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
     }
 }
 

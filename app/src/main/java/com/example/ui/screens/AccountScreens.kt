@@ -123,10 +123,6 @@ fun AccountTabScreen(
     onOpenMerchantDashboard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bagsRescued = uiState.userPrefs.bagsRescued
-    val targetBags = 20
-    val progress = (bagsRescued.toFloat() / targetBags.toFloat()).coerceIn(0f, 1f)
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -191,55 +187,6 @@ fun AccountTabScreen(
                 }
             }
 
-            // Large Green Savings Card + Progress Bar ke 20 Kantong
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        Brush.linearGradient(listOf(FreshGreen, FreshGreenDark))
-                    )
-                    .padding(18.dp)
-            ) {
-                Column {
-                    Text(
-                        text = "Kamu Sudah Hemat ${formatRupiah(uiState.userPrefs.totalSavedRp)}, Selamatkan $bagsRescued Kantong Makanan",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            lineHeight = 24.sp
-                        ),
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LinearProgressIndicator(
-                        progress = { progress },
-                        color = ActionOrange,
-                        trackColor = Color.White.copy(alpha = 0.3f),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(50))
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "$bagsRescued / $targetBags Kantong",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Target Pejuang Hemat",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                }
-            }
-
             // 3 Large Box Menus: Dompet Sisa Enak, Pesanan Saya, Vouchers & Promo
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -289,7 +236,7 @@ fun AccountTabScreen(
                     AccountMenuRow(
                         icon = Icons.Filled.Favorite,
                         iconTint = LiveRed,
-                        title = "FAVORIT - ${uiState.totalFavoritesCount} item disimpan",
+                        title = "Favorit - ${uiState.totalFavoritesCount} item disimpan",
                         subtitle = "Warung favorit & produk yang dilike",
                         onClick = onOpenFavorites,
                         testTag = "account_menu_favorit"
@@ -298,7 +245,7 @@ fun AccountTabScreen(
                     AccountMenuRow(
                         icon = Icons.Filled.History,
                         iconTint = ActionOrange,
-                        title = "RIWAYAT DILIHAT",
+                        title = "Riwayat Dilihat",
                         subtitle = "Produk yang pernah kamu lihat",
                         onClick = onOpenViewHistory,
                         testTag = "account_menu_riwayat"
@@ -307,7 +254,7 @@ fun AccountTabScreen(
                     AccountMenuRow(
                         icon = Icons.Filled.Settings,
                         iconTint = FreshGreenDark,
-                        title = "PENGATURAN",
+                        title = "Pengaturan",
                         subtitle = "Notifikasi, Bantuan WA, Jadi Penjual",
                         onClick = onOpenSettings,
                         testTag = "account_menu_pengaturan"
@@ -342,7 +289,7 @@ fun AccountTabScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "MENU PENJUAL",
+                                text = "Menu Penjual",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = TextBlack
                             )
