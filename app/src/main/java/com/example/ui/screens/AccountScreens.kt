@@ -738,15 +738,28 @@ fun ViewHistoryScreen(
 fun SettingsScreen(
     uiState: SisaEnakUiState,
     onBack: () -> Unit,
-    onUpdateNotificationHour: (String) -> Unit,
+    onOpenNotificationSettings: () -> Unit,
+    onOpenLanguageSettings: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     onOpenMerchantMode: () -> Unit,
     onLogout: () -> Unit,
     onShowMessage: (String) -> Unit
 ) {
     val context = LocalContext.current
-    var showNotifDialog by remember { mutableStateOf(false) }
-    var showPrivacyDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    val prefs = uiState.userPrefs
+    val activeNotifCount = listOf(
+        prefs.notifPromoEnabled,
+        prefs.notifOrderEnabled,
+        prefs.notifLiveEnabled,
+        prefs.notifWalletEnabled
+    ).count { it }
+    val notifSummary = if (prefs.notifPromoEnabled) {
+        "$activeNotifCount saluran aktif • Pengingat ${prefs.notificationHour} WIB"
+    } else {
+        "$activeNotifCount saluran aktif • Pengingat harian nonaktif"
+    }
 
     Scaffold(
         containerColor = BgLightGray,
@@ -767,49 +780,80 @@ fun SettingsScreen(
         ) {
             Column(
                 modifier = Modifier.widthIn(max = 600.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = BgWhite,
-                    border = BorderStroke(1.dp, SurfaceBorder),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        SettingsItemRow(
-                            icon = Icons.Filled.Notifications,
-                            title = "Notifikasi",
-                            value = "Atur jam notif ${uiState.userPrefs.notificationHour}",
-                            onClick = { showNotifDialog = true }
-                        )
-                        HorizontalDivider(color = SurfaceBorder)
-                        SettingsItemRow(
-                            icon = Icons.Filled.Language,
-                            title = "Bahasa",
-                            value = "Bahasa Indonesia - ID",
-                            onClick = { onShowMessage("Aplikasi menggunakan Bahasa Indonesia - ID") }
-                        )
-                        HorizontalDivider(color = SurfaceBorder)
-                        SettingsItemRow(
-                            icon = Icons.Filled.SupportAgent,
-                            title = "Bantuan (WA Admin)",
-                            value = "Chat WhatsApp Admin",
-                            onClick = {
-                                val waIntent = Intent(
-                                    Intent.ACTION_VIEW,
-                                    Uri.parse("https://wa.me/6281234567890?text=Halo%20Admin%20LUDES,%20saya%20butuh%20bantuan")
-                                )
-                                runCatching { context.startActivity(waIntent) }
-                                    .onFailure { onShowMessage("WA Admin LUDES: 0812-3456-7890") }
-                            }
-                        )
-                        HorizontalDivider(color = SurfaceBorder)
-                        SettingsItemRow(
-                            icon = Icons.Filled.PrivacyTip,
-                            title = "Kebijakan Privasi",
-                            value = "Aturan Ambil Sendiri & Refund",
-                            onClick = { showPrivacyDialog = true }
-                        )
+                // Section: Preferensi Aplikasi
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Preferensi Aplikasi",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = TextBlack,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = BgWhite,
+                        border = BorderStroke(1.dp, SurfaceBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            SettingsItemRow(
+                                icon = Icons.Filled.Notifications,
+                                title = "Notifikasi",
+                                value = notifSummary,
+                                onClick = onOpenNotificationSettings,
+                                testTag = "settings_notifications_row"
+                            )
+                            HorizontalDivider(color = SurfaceBorder)
+                            SettingsItemRow(
+                                icon = Icons.Filled.Language,
+                                title = "Bahasa",
+                                value = appLanguageDisplayName(prefs.appLanguage),
+                                onClick = onOpenLanguageSettings,
+                                testTag = "settings_language_row"
+                            )
+                        }
+                    }
+                }
+
+                // Section: Bantuan & Legal
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Bantuan & Legal",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = TextBlack,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = BgWhite,
+                        border = BorderStroke(1.dp, SurfaceBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            SettingsItemRow(
+                                icon = Icons.Filled.SupportAgent,
+                                title = "Bantuan (WA Admin)",
+                                value = "Chat WhatsApp Admin LUDES",
+                                onClick = {
+                                    val waIntent = Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse("https://wa.me/6281234567890?text=Halo%20Admin%20LUDES,%20saya%20butuh%20bantuan")
+                                    )
+                                    runCatching { context.startActivity(waIntent) }
+                                        .onFailure { onShowMessage("WA Admin LUDES: 0812-3456-7890") }
+                                },
+                                testTag = "settings_support_row"
+                            )
+                            HorizontalDivider(color = SurfaceBorder)
+                            SettingsItemRow(
+                                icon = Icons.Filled.PrivacyTip,
+                                title = "Kebijakan Privasi",
+                                value = "Privasi Data, Ambil Sendiri & Refund",
+                                onClick = onOpenPrivacyPolicy,
+                                testTag = "settings_privacy_row"
+                            )
+                        }
                     }
                 }
 
@@ -847,63 +891,10 @@ fun SettingsScreen(
         }
     }
 
-    if (showNotifDialog) {
-        val hours = listOf("17.00", "18.00", "19.00", "20.00")
-        AlertDialog(
-            onDismissRequest = { showNotifDialog = false },
-            title = { Text("Atur Jam Notifikasi Promo") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    hours.forEach { hour ->
-                        val selected = uiState.userPrefs.notificationHour == hour
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (selected) FreshGreenSoft else BgLightGray,
-                            border = BorderStroke(1.dp, if (selected) FreshGreen else SurfaceBorder),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onUpdateNotificationHour(hour)
-                                    showNotifDialog = false
-                                }
-                        ) {
-                            Text(
-                                text = "Ingatkan jam $hour WIB",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = TextBlack,
-                                modifier = Modifier.padding(14.dp)
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showNotifDialog = false }) { Text("Tutup") }
-            }
-        )
-    }
-
-    if (showPrivacyDialog) {
-        AlertDialog(
-            onDismissRequest = { showPrivacyDialog = false },
-            title = { Text("Kebijakan Privasi & Pembayaran") },
-            text = {
-                Text(
-                    "1. Semua pesanan hanya Ambil Sendiri di toko (tidak ada alamat pengiriman).\n" +
-                        "2. Pembayaran aman lewat aplikasi LUDES (tidak ada COD).\n" +
-                        "3. Dana diteruskan ke warung H+1 setelah QR di-scan (potongan fee 10%).\n" +
-                        "4. Jika tidak diambil lewat 15 menit dari slot jam, pesanan otomatis batal & uang kembali ke Saldo LUDES."
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showPrivacyDialog = false }) { Text("Mengerti") }
-            }
-        )
-    }
-
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
+            containerColor = BgWhite,
             title = { Text("Keluar dari Akun?") },
             text = { Text("Kamu sedang masuk sebagai ${uiState.userPrefs.userName} (${uiState.userPrefs.userEmail}).") },
             confirmButton = {
@@ -930,20 +921,30 @@ private fun SettingsItemRow(
     icon: ImageVector,
     title: String,
     value: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    testTag: String = ""
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 60.dp)
+            .heightIn(min = 64.dp)
             .clickable { onClick() }
+            .then(if (testTag.isNotEmpty()) Modifier.testTag(testTag) else Modifier)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = FreshGreenDark)
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = FreshGreenSoft,
+            modifier = Modifier.size(40.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = FreshGreenDark, modifier = Modifier.size(20.dp))
+            }
+        }
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = TextBlack)
+            Text(title, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold), color = TextBlack)
             Text(value, style = MaterialTheme.typography.bodySmall, color = TextGray)
         }
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = TextGray)

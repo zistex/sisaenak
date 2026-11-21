@@ -74,6 +74,26 @@ class SisaEnakRepository(
         prefsRepo.updateNotificationHour(hour)
     }
 
+    suspend fun updateNotificationSettings(
+        promoEnabled: Boolean,
+        orderEnabled: Boolean,
+        liveEnabled: Boolean,
+        walletEnabled: Boolean,
+        hour: String
+    ) {
+        prefsRepo.updateNotificationSettings(
+            promoEnabled = promoEnabled,
+            orderEnabled = orderEnabled,
+            liveEnabled = liveEnabled,
+            walletEnabled = walletEnabled,
+            hour = hour
+        )
+    }
+
+    suspend fun updateAppLanguage(languageCode: String) {
+        prefsRepo.updateAppLanguage(languageCode)
+    }
+
     suspend fun topUpSaldo(amount: Int) {
         prefsRepo.adjustWallet(amount)
     }

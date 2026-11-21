@@ -57,10 +57,12 @@ import com.example.ui.screens.AccountTabScreen
 import com.example.ui.screens.CheckoutPickupScreen
 import com.example.ui.screens.FavoritesScreen
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.LanguageSettingsScreen
 import com.example.ui.screens.LiveTabScreen
 import com.example.ui.screens.LocationPickerScreen
 import com.example.ui.screens.MerchantQrScannerScreen
 import com.example.ui.screens.MerchantScreen
+import com.example.ui.screens.NotificationSettingsScreen
 import com.example.ui.screens.NotificationsScreen
 import com.example.ui.screens.OrderCompletedScreen
 import com.example.ui.screens.OrderDetailScreen
@@ -69,6 +71,7 @@ import com.example.ui.screens.OrderRatingScreen
 import com.example.ui.screens.OrderSuccessScreen
 import com.example.ui.screens.OrdersTabScreen
 import com.example.ui.screens.PaymentScreen
+import com.example.ui.screens.PrivacyPolicyScreen
 import com.example.ui.screens.ProductDetailScreen
 import com.example.ui.screens.RegisterAuthScreen
 import com.example.ui.screens.SearchScreen
@@ -108,6 +111,9 @@ private object Routes {
     const val FAVORITES = "favorites"
     const val VIEW_HISTORY = "view_history"
     const val SETTINGS = "settings"
+    const val SETTINGS_NOTIFICATIONS = "settings_notifications"
+    const val SETTINGS_LANGUAGE = "settings_language"
+    const val SETTINGS_PRIVACY = "settings_privacy"
     const val WALLET = "wallet"
     const val VOUCHERS = "vouchers"
     const val MERCHANT = "merchant"
@@ -552,7 +558,15 @@ fun SisaEnakApp(
                     SettingsScreen(
                         uiState = uiState,
                         onBack = { navController.popBackStack() },
-                        onUpdateNotificationHour = { viewModel.updateNotificationHour(it) },
+                        onOpenNotificationSettings = {
+                            navController.navigate(Routes.SETTINGS_NOTIFICATIONS)
+                        },
+                        onOpenLanguageSettings = {
+                            navController.navigate(Routes.SETTINGS_LANGUAGE)
+                        },
+                        onOpenPrivacyPolicy = {
+                            navController.navigate(Routes.SETTINGS_PRIVACY)
+                        },
                         onOpenMerchantMode = { navController.navigate(Routes.MERCHANT) },
                         onLogout = {
                             viewModel.logout {
@@ -561,6 +575,39 @@ fun SisaEnakApp(
                                 }
                             }
                         },
+                        onShowMessage = { viewModel.showMessage(it) }
+                    )
+                }
+
+                composable(Routes.SETTINGS_NOTIFICATIONS) {
+                    NotificationSettingsScreen(
+                        uiState = uiState,
+                        onBack = { navController.popBackStack() },
+                        onSaveSettings = { promo, order, live, wallet, hour ->
+                            viewModel.updateNotificationSettings(
+                                promoEnabled = promo,
+                                orderEnabled = order,
+                                liveEnabled = live,
+                                walletEnabled = wallet,
+                                hour = hour
+                            )
+                        }
+                    )
+                }
+
+                composable(Routes.SETTINGS_LANGUAGE) {
+                    LanguageSettingsScreen(
+                        uiState = uiState,
+                        onBack = { navController.popBackStack() },
+                        onApplyLanguage = { code, label ->
+                            viewModel.updateAppLanguage(code, label)
+                        }
+                    )
+                }
+
+                composable(Routes.SETTINGS_PRIVACY) {
+                    PrivacyPolicyScreen(
+                        onBack = { navController.popBackStack() },
                         onShowMessage = { viewModel.showMessage(it) }
                     )
                 }

@@ -458,6 +458,32 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun updateNotificationSettings(
+        promoEnabled: Boolean,
+        orderEnabled: Boolean,
+        liveEnabled: Boolean,
+        walletEnabled: Boolean,
+        hour: String
+    ) {
+        viewModelScope.launch {
+            repository.updateNotificationSettings(
+                promoEnabled = promoEnabled,
+                orderEnabled = orderEnabled,
+                liveEnabled = liveEnabled,
+                walletEnabled = walletEnabled,
+                hour = hour
+            )
+            snackbarMessage.value = "Preferensi notifikasi berhasil disimpan"
+        }
+    }
+
+    fun updateAppLanguage(languageCode: String, label: String) {
+        viewModelScope.launch {
+            repository.updateAppLanguage(languageCode)
+            snackbarMessage.value = "Bahasa aplikasi diatur ke $label"
+        }
+    }
+
     fun topUpSaldo(amount: Int) {
         viewModelScope.launch {
             repository.topUpSaldo(amount)

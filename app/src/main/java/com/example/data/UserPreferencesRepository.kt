@@ -25,6 +25,11 @@ data class UserProfilePrefs(
     val totalSavedRp: Int = 128000,
     val bagsRescued: Int = 12,
     val notificationHour: String = "19.00",
+    val notifPromoEnabled: Boolean = true,
+    val notifOrderEnabled: Boolean = true,
+    val notifLiveEnabled: Boolean = true,
+    val notifWalletEnabled: Boolean = true,
+    val appLanguage: String = "id",
     val isLoggedIn: Boolean = false,
     val isEmailVerified: Boolean = false
 )
@@ -44,6 +49,11 @@ class UserPreferencesRepository(private val context: Context) {
         val TOTAL_SAVED = intPreferencesKey("total_saved_rp")
         val BAGS_RESCUED = intPreferencesKey("bags_rescued")
         val NOTIFICATION_HOUR = stringPreferencesKey("notification_hour")
+        val NOTIF_PROMO_ENABLED = booleanPreferencesKey("notif_promo_enabled")
+        val NOTIF_ORDER_ENABLED = booleanPreferencesKey("notif_order_enabled")
+        val NOTIF_LIVE_ENABLED = booleanPreferencesKey("notif_live_enabled")
+        val NOTIF_WALLET_ENABLED = booleanPreferencesKey("notif_wallet_enabled")
+        val APP_LANGUAGE = stringPreferencesKey("app_language")
     }
 
     val userPrefs: Flow<UserProfilePrefs> = context.dataStore.data.map { prefs ->
@@ -57,6 +67,11 @@ class UserPreferencesRepository(private val context: Context) {
             totalSavedRp = prefs[Keys.TOTAL_SAVED] ?: 128000,
             bagsRescued = prefs[Keys.BAGS_RESCUED] ?: 12,
             notificationHour = prefs[Keys.NOTIFICATION_HOUR] ?: "19.00",
+            notifPromoEnabled = prefs[Keys.NOTIF_PROMO_ENABLED] ?: true,
+            notifOrderEnabled = prefs[Keys.NOTIF_ORDER_ENABLED] ?: true,
+            notifLiveEnabled = prefs[Keys.NOTIF_LIVE_ENABLED] ?: true,
+            notifWalletEnabled = prefs[Keys.NOTIF_WALLET_ENABLED] ?: true,
+            appLanguage = prefs[Keys.APP_LANGUAGE] ?: "id",
             isLoggedIn = prefs[Keys.IS_LOGGED_IN] ?: false,
             isEmailVerified = prefs[Keys.IS_EMAIL_VERIFIED] ?: false
         )
@@ -123,6 +138,26 @@ class UserPreferencesRepository(private val context: Context) {
 
     suspend fun updateNotificationHour(hour: String) {
         context.dataStore.edit { it[Keys.NOTIFICATION_HOUR] = hour }
+    }
+
+    suspend fun updateNotificationSettings(
+        promoEnabled: Boolean,
+        orderEnabled: Boolean,
+        liveEnabled: Boolean,
+        walletEnabled: Boolean,
+        hour: String
+    ) {
+        context.dataStore.edit {
+            it[Keys.NOTIF_PROMO_ENABLED] = promoEnabled
+            it[Keys.NOTIF_ORDER_ENABLED] = orderEnabled
+            it[Keys.NOTIF_LIVE_ENABLED] = liveEnabled
+            it[Keys.NOTIF_WALLET_ENABLED] = walletEnabled
+            it[Keys.NOTIFICATION_HOUR] = hour
+        }
+    }
+
+    suspend fun updateAppLanguage(languageCode: String) {
+        context.dataStore.edit { it[Keys.APP_LANGUAGE] = languageCode }
     }
 
     suspend fun adjustWallet(deltaRp: Int) {
