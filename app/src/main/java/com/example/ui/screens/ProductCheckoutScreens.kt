@@ -999,7 +999,7 @@ fun CheckoutPickupScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Aturan Batal Otomatis: Jika tidak diambil lewat 15 menit dari slot jam pilihan, pesanan otomatis batal, uang kembali ke Saldo Sisa Enak, dan kantong muncul lagi di Beranda.",
+                            text = "Aturan Batal Otomatis: Jika tidak diambil lewat 15 menit dari slot jam pilihan, pesanan otomatis batal, uang kembali ke Saldo LUDES, dan kantong muncul lagi di Beranda.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextBlack
                         )
@@ -1027,7 +1027,7 @@ fun PaymentScreen(
         containerColor = BgLightGray,
         topBar = {
             SubScreenTopBar(
-                title = "Pembayaran Aman Sisa Enak",
+                title = "Pembayaran Aman LUDES",
                 onBack = onBack
             )
         },
@@ -1143,7 +1143,7 @@ fun PaymentScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Pembayaran wajib lewat aplikasi Sisa Enak (Tidak ada COD / bayar cash di warung). Dana diteruskan ke warung setelah QR kamu di-scan.",
+                            text = "Pembayaran wajib lewat aplikasi LUDES (Tidak ada COD / bayar cash di warung). Dana diteruskan ke warung setelah QR kamu di-scan.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextBlack
                         )

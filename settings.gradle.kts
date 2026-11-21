@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Sisa Enak"
+rootProject.name = "LUDES"
 
 include(":app")

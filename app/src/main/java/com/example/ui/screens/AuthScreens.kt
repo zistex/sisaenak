@@ -194,7 +194,7 @@ fun SplashScreen(
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.ic_sisa_enak_fg),
-                            contentDescription = "Logo Sisa Enak",
+                            contentDescription = "Logo LUDES",
                             contentScale = ContentScale.Fit,
                             modifier = Modifier
                                 .fillMaxSize()
@@ -206,9 +206,9 @@ fun SplashScreen(
                 Spacer(modifier = Modifier.height(22.dp))
 
                 Text(
-                    text = "Sisa Enak",
+                    text = "LUDES",
                     style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 34.sp,
+                        fontSize = 36.sp,
                         fontWeight = FontWeight.ExtraBold
                     ),
                     color = Color.White
@@ -217,7 +217,7 @@ fun SplashScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Makan Enak, Hemat 70%, Anti Mubazir",
+                    text = "Makanan Enak Harga Hemat, Sebelum Ludes",
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Medium
                     ),
@@ -386,7 +386,7 @@ fun RegisterAuthScreen(
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Filled.Eco,
-                                    contentDescription = "Sisa Enak",
+                                    contentDescription = "LUDES",
                                     tint = FreshGreen,
                                     modifier = Modifier.size(26.dp)
                                 )
@@ -395,14 +395,14 @@ fun RegisterAuthScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Sisa Enak",
+                                text = "LUDES",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.ExtraBold
                                 ),
                                 color = Color.White
                             )
                             Text(
-                                text = "Ambil Sendiri • Hemat Hingga 70%",
+                                text = "Makanan Enak Harga Hemat, Sebelum Ludes",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.9f)
                             )
@@ -415,9 +415,9 @@ fun RegisterAuthScreen(
                         text = if (isVerifyingEmail) {
                             "Verifikasi Email Kamu"
                         } else if (authTab == 0) {
-                            "Buat Akun Sisa Enak"
+                            "Buat Akun LUDES"
                         } else {
-                            "Masuk ke Sisa Enak"
+                            "Masuk ke LUDES"
                         },
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontSize = 24.sp,
@@ -871,7 +871,7 @@ fun RegisterAuthScreen(
 
                 // Footer guarantee
                 Text(
-                    text = "Hanya Ambil Sendiri di warung terdekat • Tidak ada ongkir • Pembayaran aman lewat Sisa Enak",
+                    text = "Hanya Ambil Sendiri di warung terdekat • Tidak ada ongkir • Pembayaran aman lewat LUDES",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextGray,
                     textAlign = TextAlign.Center,

@@ -85,7 +85,7 @@ class UserPreferencesRepository(private val context: Context) {
                     it[Keys.IS_LOGGED_IN] = true
                     it[Keys.IS_EMAIL_VERIFIED] = true
                 }
-                true to "Selamat datang kembali, ${prefs[Keys.USER_NAME] ?: "Sahabat Sisa Enak"}!"
+                true to "Selamat datang kembali, ${prefs[Keys.USER_NAME] ?: "Sahabat LUDES"}!"
             }
             cleanEmail == "siti.rahma@gmail.com" && password == "123456" -> {
                 loginDemoSiti()

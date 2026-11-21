@@ -187,13 +187,13 @@ fun AccountTabScreen(
                 }
             }
 
-            // 3 Large Box Menus: Dompet Sisa Enak, Pesanan Saya, Vouchers & Promo
+            // 3 Large Box Menus: Dompet LUDES, Pesanan Saya, Vouchers & Promo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 AccountQuickBox(
-                    title = "Dompet\nSisa Enak",
+                    title = "Dompet\nLUDES",
                     subtitle = formatRupiah(uiState.userPrefs.walletBalanceRp),
                     icon = Icons.Filled.AccountBalanceWallet,
                     tint = FreshGreenDark,
@@ -797,10 +797,10 @@ fun SettingsScreen(
                             onClick = {
                                 val waIntent = Intent(
                                     Intent.ACTION_VIEW,
-                                    Uri.parse("https://wa.me/6281234567890?text=Halo%20Admin%20Sisa%20Enak,%20saya%20butuh%20bantuan")
+                                    Uri.parse("https://wa.me/6281234567890?text=Halo%20Admin%20LUDES,%20saya%20butuh%20bantuan")
                                 )
                                 runCatching { context.startActivity(waIntent) }
-                                    .onFailure { onShowMessage("WA Admin Sisa Enak: 0812-3456-7890") }
+                                    .onFailure { onShowMessage("WA Admin LUDES: 0812-3456-7890") }
                             }
                         )
                         HorizontalDivider(color = SurfaceBorder)
@@ -890,9 +890,9 @@ fun SettingsScreen(
             text = {
                 Text(
                     "1. Semua pesanan hanya Ambil Sendiri di toko (tidak ada alamat pengiriman).\n" +
-                        "2. Pembayaran aman lewat aplikasi Sisa Enak (tidak ada COD).\n" +
+                        "2. Pembayaran aman lewat aplikasi LUDES (tidak ada COD).\n" +
                         "3. Dana diteruskan ke warung H+1 setelah QR di-scan (potongan fee 10%).\n" +
-                        "4. Jika tidak diambil lewat 15 menit dari slot jam, pesanan otomatis batal & uang kembali ke Saldo Sisa Enak."
+                        "4. Jika tidak diambil lewat 15 menit dari slot jam, pesanan otomatis batal & uang kembali ke Saldo LUDES."
                 )
             },
             confirmButton = {
@@ -977,7 +977,7 @@ fun WalletScreen(
         containerColor = BgLightGray,
         topBar = {
             SubScreenTopBar(
-                title = "Dompet Sisa Enak",
+                title = "Dompet LUDES",
                 onBack = onBack
             )
         }
@@ -1002,7 +1002,7 @@ fun WalletScreen(
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Text(
-                            text = "Saldo Sisa Enak Kamu",
+                            text = "Saldo LUDES Kamu",
                             style = MaterialTheme.typography.bodyLarge,
                             color = Color.White
                         )

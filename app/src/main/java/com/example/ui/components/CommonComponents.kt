@@ -132,7 +132,7 @@ fun SisaEnakTopHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Logo Sisa Enak
+            // Logo LUDES
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.testTag("header_logo")
@@ -146,7 +146,7 @@ fun SisaEnakTopHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ShoppingBag,
-                        contentDescription = "Logo Sisa Enak",
+                        contentDescription = "Logo LUDES",
                         tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
@@ -154,7 +154,7 @@ fun SisaEnakTopHeader(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
-                        text = "Sisa Enak",
+                        text = "LUDES",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold
@@ -162,7 +162,7 @@ fun SisaEnakTopHeader(
                         color = TextBlack
                     )
                     Text(
-                        text = "Ambil Sendiri",
+                        text = "Sebelum Ludes • Ambil Sendiri",
                         style = MaterialTheme.typography.labelMedium,
                         color = FreshGreenDark
                     )

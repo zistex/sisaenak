@@ -400,7 +400,7 @@ fun OrderDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Dana ${formatRupiah(order.totalPaid)} sudah dikembalikan ke Saldo Sisa Enak.",
+                                text = "Dana ${formatRupiah(order.totalPaid)} sudah dikembalikan ke Saldo LUDES.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = TextBlack,
                                 textAlign = TextAlign.Center

@@ -318,7 +318,7 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
 
         list += AppNotification(
             id = "notif_wallet_info",
-            title = "Saldo Dompet Sisa Enak siap ditarik",
+            title = "Saldo Dompet LUDES siap ditarik",
             message = "Kelola saldo refund & ajukan tarik saldo ke rekening bank atau e-wallet kapan saja.",
             timeLabel = "Hari ini",
             category = NotificationCategory.DOMPET,
@@ -329,7 +329,7 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
 
         list += AppNotification(
             id = "notif_reminder_evening",
-            title = "Waktunya berburu makanan sisa enak!",
+            title = "Waktunya berburu makanan enak hemat sebelum ludes!",
             message = "Cek warung terdekat di Bandung dengan filter jarak & harga di menu Pencarian.",
             timeLabel = "Kemarin",
             category = NotificationCategory.PROMO,
@@ -461,7 +461,7 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
     fun topUpSaldo(amount: Int) {
         viewModelScope.launch {
             repository.topUpSaldo(amount)
-            snackbarMessage.value = "Saldo Sisa Enak bertambah!"
+            snackbarMessage.value = "Saldo LUDES bertambah!"
         }
     }
 
@@ -519,7 +519,7 @@ class SisaEnakViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             val refund = repository.triggerAutoCancelExpiredOrder(orderId)
             if (refund > 0) {
-                snackbarMessage.value = "Lewat 15 menit: Pesanan dibatalkan otomatis & dana kembali ke Saldo Sisa Enak."
+                snackbarMessage.value = "Lewat 15 menit: Pesanan dibatalkan otomatis & dana kembali ke Saldo LUDES."
             }
         }
     }

@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">Sisa Enak</string>
+    <string name="app_name">LUDES</string>
     <string name="greeting_evening">Halo, selamat malam</string>
     <string name="default_location">Bandung - Dago</string>
     <string name="search_placeholder">Cari roti, nasi, martabak</string>
-    <string name="promo_banner_title">Sisa Enak Malam Ini Diskon 70%</string>
+    <string name="promo_banner_title">LUDES Malam Ini Diskon 70%</string>
     <string name="nav_home">Beranda</string>
     <string name="nav_orders">Pesanan</string>
     <string name="nav_live">Live</string>

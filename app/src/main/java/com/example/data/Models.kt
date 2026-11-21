@@ -31,7 +31,7 @@ enum class PaymentMethod(val label: String, val subtitle: String) {
     OVO("OVO", "Saldo Rp12.000"),
     DANA("DANA", "Bayar instan tanpa biaya tambahan"),
     TRANSFER_BANK("Transfer Bank", "BCA / BRI / Mandiri / BNI"),
-    SALDO_SISA_ENAK("Saldo Sisa Enak", "Saldo refund & dompet aplikasi")
+    SALDO_SISA_ENAK("Saldo LUDES", "Saldo refund & dompet aplikasi")
 }
 
 data class VoucherItem(

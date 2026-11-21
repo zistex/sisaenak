@@ -96,9 +96,6 @@ fun HomeScreen(
     onOpenWallet: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val firstName = uiState.userPrefs.userName.trim().substringBefore(" ").ifBlank { "Sahabat" }
-    val totalStock = uiState.products.sumOf { it.stock }
-
     val displayedProducts = if (uiState.selectedCategory == null) {
         uiState.products
     } else {
@@ -118,60 +115,6 @@ fun HomeScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Modern Personalized Greeting + Live Availability Badge
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Halo, $firstName!",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontSize = 23.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            ),
-                            color = TextBlack,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Selamatkan makanan enak dekat ${uiState.userPrefs.location}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextGray,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = FreshGreenSoft,
-                        border = BorderStroke(1.dp, FreshGreenBorder)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Eco,
-                                contentDescription = null,
-                                tint = FreshGreenDark,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "$totalStock siap",
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.ExtraBold),
-                                color = FreshGreenDark
-                            )
-                        }
-                    }
-                }
-            }
-
             // Clickable Search Trigger Pill -> Opens Dedicated SearchScreen
             item {
                 Surface(
@@ -553,7 +496,7 @@ private fun ModernHeroBannerCarousel(
                                 }
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Text(
-                                    text = "Sisa Enak Malam Ini\nHemat Hingga 70%",
+                                    text = "LUDES Malam Ini\nHemat Hingga 70%",
                                     style = MaterialTheme.typography.titleLarge.copy(
                                         fontSize = 21.sp,
                                         fontWeight = FontWeight.ExtraBold,
@@ -731,7 +674,7 @@ private fun ModernHeroBannerCarousel(
                                 ) {
                                     Column(modifier = Modifier.padding(10.dp)) {
                                         Text(
-                                            text = "Saldo Sisa Enak",
+                                            text = "Saldo LUDES",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = Color.White.copy(alpha = 0.85f)
                                         )

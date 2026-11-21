@@ -892,7 +892,7 @@ private fun TikTokLiveStreamPage(
                         label = "Bagikan",
                         tint = Color.White,
                         onClick = {
-                            val text = "Nonton Live ${product.storeName} di Sisa Enak yuk! Kantong hemat cuma ${formatRupiah(product.discountPrice)}, ambil sendiri di ${product.storeAddress}."
+                            val text = "Nonton Live ${product.storeName} di LUDES yuk! Kantong hemat cuma ${formatRupiah(product.discountPrice)}, ambil sendiri di ${product.storeAddress}."
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 putExtra(Intent.EXTRA_TEXT, text)
                                 type = "text/plain"
@@ -1876,7 +1876,7 @@ private fun LiveOrderSuccessSheetContent(
 
             OutlinedButton(
                 onClick = {
-                    val shareText = "Aku baru saja menyelamatkan makanan dari Live ${order.storeName} di Sisa Enak cuma ${formatRupiah(order.bagPrice)}! Ambil sendiri di ${order.storeAddress}."
+                    val shareText = "Aku baru saja menyelamatkan makanan dari Live ${order.storeName} di LUDES cuma ${formatRupiah(order.bagPrice)}! Ambil sendiri di ${order.storeAddress}."
                     val sendIntent = Intent(Intent.ACTION_SEND).apply {
                         putExtra(Intent.EXTRA_TEXT, shareText)
                         type = "text/plain"

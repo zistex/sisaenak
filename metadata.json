@@ -1,6 +1,6 @@
 {
-  "name": "Sisa Enak",
-  "description": "Aplikasi penyelamat makanan sisa berkualitas dengan harga hemat hingga 70% khusus ambil sendiri di warung dan toko terdekat.",
+  "name": "LUDES",
+  "description": "LUDES - Makanan Enak Harga Hemat, Sebelum Ludes. Ambil sendiri di warung dan toko terdekat.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

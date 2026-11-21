@@ -631,7 +631,7 @@ fun SisaEnakApp(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Alamat Ambil Sendiri: $storeAddress", style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        "Catatan: Pembayaran hanya lewat aplikasi Sisa Enak (tidak ada COD).",
+                        "Catatan: Pembayaran hanya lewat aplikasi LUDES (tidak ada COD).",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextGray
                     )

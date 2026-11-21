@@ -171,7 +171,7 @@ class SisaEnakRepository(
     /**
      * Aturan Batal Otomatis:
      * Jika user tidak ambil sampai 15 menit lewat dari slot jam yang dipilih,
-     * pesanan otomatis batal, uang kembali jadi Saldo Sisa Enak, kantong muncul lagi di Beranda.
+     * pesanan otomatis batal, uang kembali jadi Saldo LUDES, kantong muncul lagi di Beranda.
      */
     suspend fun triggerAutoCancelExpiredOrder(orderId: String): Int {
         val order = orderDao.getOrderById(orderId) ?: return 0
@@ -190,7 +190,7 @@ class SisaEnakRepository(
             ProductReviewEntity(
                 id = "rev_order_$orderId",
                 productId = order.productId,
-                reviewerName = order.buyerName.ifBlank { "Pembeli Sisa Enak" },
+                reviewerName = order.buyerName.ifBlank { "Pembeli LUDES" },
                 rating = rating.coerceIn(1, 5),
                 comment = cleanComment.ifEmpty { "Makanan masih segar dan enak banget!" },
                 timeLabel = "Baru saja",
